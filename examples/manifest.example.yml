@@ -1,0 +1,12 @@
+# Executable type
+- Operation:
+    Type: Executable
+    Executable: setup.exe # Location of exe
+    Args: args            # Args for exe
+    Services: services    # Services that need to be stopped for upgrade
+
+# FileCopy,  C:\ included in payload
+- Operation:
+    Type: FileCopy
+    Services: services # Services that need to be stopped for upgrade
+

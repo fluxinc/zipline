@@ -17,13 +17,14 @@ namespace DICOMCapacitorWarden
     /// <summary>
     /// The main entry point for the application.
     /// </summary>
-    static void Main()
+    static void Main(string[] args)
     {
       var optionsSet = new OptionSet
       {
 
       };
-
+      var service = new WindowsService();
+      service.TestStartupAndStop(args);
     }
   }
 }
