@@ -6,10 +6,10 @@ using static Warden.util.VerifyDetachedSignature;
 using log4net;
 using System.IO.Compression;
 using YamlDotNet.Serialization;
-using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization.NamingConventions;
 using DICOMCapacitorWarden.util;
 using System.Diagnostics;
+using System.Speech.Synthesis;
 
 namespace DICOMCapacitorWarden
 {
@@ -17,6 +17,7 @@ namespace DICOMCapacitorWarden
   {
     private static readonly ILog Logger = LogManager.GetLogger(typeof(WindowsService));
     private bool QUITTING => false;
+    private SpeechSynthesizer synth => new SpeechSynthesizer();
 
     public WindowsService()
     {
@@ -94,7 +95,12 @@ namespace DICOMCapacitorWarden
 
     private void FileCopyOperation(Manifest manifest, DirectoryInfo directory)
     {
-
+      if (FileCopy.CopyFolderContents(directory.FullName, @"C:\\"))
+      {
+        Logger.Info("Deleting Manifest File");
+        File.Delete(@"C:\manifest.yml");
+        Logger.Info("FileCopy Operation: Success");
+      }
     }
 
     private void ProcessManifest(DirectoryInfo directory)
@@ -148,6 +154,7 @@ namespace DICOMCapacitorWarden
 
           if (extractDir.Exists && FileVerification(extractDir.GetFiles("payload.zip")[0]))
           {
+
             Logger.Info($"Processing payload in {extractDir.FullName}");
             ExtractFile(extractDir.GetFiles("payload.zip")[0]);
 
