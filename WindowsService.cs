@@ -5,7 +5,11 @@ using Usb.Events;
 using static Warden.util.VerifyDetachedSignature;
 using log4net;
 using System.IO.Compression;
-
+using YamlDotNet.Serialization;
+using YamlDotNet.RepresentationModel;
+using YamlDotNet.Serialization.NamingConventions;
+using DICOMCapacitorWarden.util;
+using System.Diagnostics;
 
 namespace DICOMCapacitorWarden
 {
@@ -62,9 +66,9 @@ namespace DICOMCapacitorWarden
       return false;
     }
 
-    private void ProcessFile(FileInfo file)
+    private void ExtractFile(FileInfo file)
     {
-      Logger.Info($"Extracting {file} to {file.DirectoryName}");
+      Logger.Info($"Extracting {file.FullName} to {file.DirectoryName}");
 
       try
       {
@@ -76,7 +80,55 @@ namespace DICOMCapacitorWarden
         return;
       }
 
-      Logger.Info($"{file} extracted successfully.");
+      Logger.Info($"{file.FullName} extracted successfully.");
+    }
+
+    private void ExecutableOperation(Manifest manifest, DirectoryInfo directory)
+    {
+      Logger.Info($"Starting {manifest.Executable}");
+      ProcessStartInfo processStartInfo = new ProcessStartInfo();
+      processStartInfo.WorkingDirectory = directory.FullName;
+      processStartInfo.FileName = Path.Combine(directory.FullName, manifest.Executable);
+      Process.Start(processStartInfo);
+    }
+
+    private void FileCopyOperation(Manifest manifest, DirectoryInfo directory)
+    {
+
+    }
+
+    private void ProcessManifest(DirectoryInfo directory)
+    {
+      var manifest = directory.GetFiles("manifest.yml")[0];
+
+      if (!File.Exists(manifest.FullName))
+      {
+        Logger.Info($"No valid manifest file found. {manifest.FullName}");
+        return;
+      }
+
+      var manifestText = File.ReadAllText(manifest.FullName);
+      var deserializer = new DeserializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .Build();
+      var manifestData = deserializer.Deserialize<Manifest>(manifestText);
+
+      switch (manifestData.Operation.ToLower())
+      {
+        case "executable":
+          Logger.Info("Running Executable Operation from Manifest...");
+          ExecutableOperation(manifestData, directory);
+          break;
+
+        case "filecopy":
+          Logger.Info("Running File Copy from Manifest...");
+          FileCopyOperation(manifestData, directory);
+          break;
+
+        default:
+          Logger.Info("Manifest doesn't contain a valid operation.");
+          break;
+      }
     }
 
     private void OnUsbDriveMounted(string path)
@@ -87,11 +139,19 @@ namespace DICOMCapacitorWarden
       if (dir.Exists)
       {
         var files = dir.GetFiles("WARDEN*.zip");
+
         foreach(var file in files) 
         {
-          if (FileVerification(file))
+          ExtractFile(file);
+          DirectoryInfo extractDir =
+            Directory.CreateDirectory(Path.Combine(file.DirectoryName, Path.GetFileNameWithoutExtension(file.FullName)));
+
+          if (extractDir.Exists && FileVerification(extractDir.GetFiles("payload.zip")[0]))
           {
-            ProcessFile(file);
+            Logger.Info($"Processing payload in {extractDir.FullName}");
+            ExtractFile(extractDir.GetFiles("payload.zip")[0]);
+
+            ProcessManifest(Directory.CreateDirectory(Path.Combine(extractDir.FullName, "payload")));
           }
         }
         return;
