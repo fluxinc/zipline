@@ -79,6 +79,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="util\FileCopy.cs" />
     <Compile Include="util\Manifest.cs" />
     <Compile Include="util\VerifyDetachedSignature.cs" />
     <Compile Include="WindowsService.cs">

@@ -10,12 +10,18 @@ using YamlDotNet.Serialization.NamingConventions;
 using DICOMCapacitorWarden.util;
 using System.Diagnostics;
 using System.Speech.Synthesis;
+using System.Text.RegularExpressions;
 
 namespace DICOMCapacitorWarden
 {
   public partial class WindowsService : ServiceBase
   {
-    private static readonly ILog Logger = LogManager.GetLogger(typeof(WindowsService));
+    private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
+
+    private static readonly string HashLog = "hash.log";
+
+    public static string HashLogText = null;
+
     private bool QUITTING => false;
     private SpeechSynthesizer synth => new SpeechSynthesizer();
 
@@ -56,7 +62,7 @@ namespace DICOMCapacitorWarden
         // In this method we can just sign .zips using pgp.
         // If the .zip is modified the signature should fail
         // giving us checksums for free too. 
-
+       
         if (VerifySignature(fileInfo.FullName, signature.FullName))
         {
           Logger.Info($"{file.FullName}: VERIFIED");
@@ -137,6 +143,38 @@ namespace DICOMCapacitorWarden
       }
     }
 
+    private string StripHashCode(string filename)
+    {
+      var match = Regex.Match(filename, "^WARDEN-(.*).zip");
+      return match.Groups[1].Value;
+    }
+
+    private bool UpdateAlreadyProcessed(FileInfo file)
+    {
+      if (!File.Exists(HashLog)) File.Create(HashLog);
+
+      if (HashLogText == null) HashLogText = File.ReadAllText(HashLog);
+      
+      var hashCode = StripHashCode(file.Name);
+
+      if (HashLogText.Contains(hashCode + Environment.NewLine))
+      {
+        Logger.Info($"{file} has already been processed.");
+        
+        return true;
+      }
+
+      File.AppendAllText(HashLog, hashCode + Environment.NewLine);
+      HashLogText = null;
+      return false;
+    }
+
+    private void ReturnLogFile(FileInfo file)
+    {
+      File.Delete("update.log");
+      File.WriteAllText("update.log", "");
+    }
+
     private void OnUsbDriveMounted(string path)
     {
       Logger.Info($"{path} was mounted.  Searching for Warden Files...");
@@ -148,6 +186,13 @@ namespace DICOMCapacitorWarden
 
         foreach(var file in files) 
         {
+
+          if (UpdateAlreadyProcessed(file))
+          {
+            ReturnLogFile(file);
+            continue;
+          } 
+
           ExtractFile(file);
           DirectoryInfo extractDir =
             Directory.CreateDirectory(Path.Combine(file.DirectoryName, Path.GetFileNameWithoutExtension(file.FullName)));
@@ -159,6 +204,7 @@ namespace DICOMCapacitorWarden
             ExtractFile(extractDir.GetFiles("payload.zip")[0]);
 
             ProcessManifest(Directory.CreateDirectory(Path.Combine(extractDir.FullName, "payload")));
+            ReturnLogFile(file);
           }
         }
         return;
