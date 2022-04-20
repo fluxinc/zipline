@@ -25,7 +25,10 @@ namespace DICOMCapacitorWarden
     public static string HashLogText = null;
 
     private bool QUITTING => false;
+
+#if RELEASE
     private SpeechSynthesizer synth => new SpeechSynthesizer();
+#endif
 
     public WindowsService()
     {
@@ -92,6 +95,16 @@ namespace DICOMCapacitorWarden
       Logger.Info($"{file.FullName} extracted successfully.");
     }
 
+    private void LoggerWithRobot(string strung)
+    {
+      Logger.Info(strung);
+
+#if RELEASE
+      synth.Speak(strung);
+#endif
+
+    }
+
     private void ExecutableOperation(Manifest manifest, DirectoryInfo directory)
     {
       var proc = new Process();
@@ -111,6 +124,7 @@ namespace DICOMCapacitorWarden
       proc.WaitForExit();
 
       if (!String.IsNullOrEmpty(output)) Logger.Info(output);
+      Logger.Info("Executable Operation: Success");
     }
 
     private void FileCopyOperation(Manifest manifest, DirectoryInfo directory)
@@ -224,7 +238,9 @@ namespace DICOMCapacitorWarden
           {
             ReturnLogFile(file);
             continue;
-          } 
+          }
+
+          LoggerWithRobot("Beginning Warden Update");
 
           ExtractFile(file);
           DirectoryInfo extractDir =
@@ -239,6 +255,8 @@ namespace DICOMCapacitorWarden
             ProcessManifest(Directory.CreateDirectory(Path.Combine(extractDir.FullName, "payload")));
             ReturnLogFile(file);
             CleanupExtractedFiles(extractDir);
+
+            LoggerWithRobot("Warden Update Completed");
           }
         }
         return;

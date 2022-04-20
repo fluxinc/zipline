@@ -48,6 +48,7 @@ namespace DICOMCapacitorWarden.util
       }
       catch (Exception ex)
       {
+        Logger.Error(ex);
         return false;
       }
     }
