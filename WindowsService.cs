@@ -53,7 +53,7 @@ namespace DICOMCapacitorWarden
 
     protected override void OnStop()
     {
-
+      Logger.Info("Warden Terminating.");
     }
 
     private static bool FileVerification(FileInfo file)
@@ -177,23 +177,25 @@ namespace DICOMCapacitorWarden
       return match.Groups[1].Value;
     }
 
-    private bool UpdateAlreadyProcessed(FileInfo file)
+    private void LogHashCode(string hashcode)
+    {
+      File.AppendAllText(HashLog, hashcode + Environment.NewLine);
+      HashLogText = null;
+    }
+
+    private bool UpdateAlreadyProcessed(string hashCode)
     {
       if (!File.Exists(HashLog)) File.Create(HashLog);
 
       if (HashLogText == null) HashLogText = File.ReadAllText(HashLog);
       
-      var hashCode = StripHashCode(file.Name);
-
       if (HashLogText.Contains(hashCode + Environment.NewLine))
       {
-        Logger.Info($"{file} has already been processed.");
+        Logger.Info($"{hashCode} has already been processed.");
         
         return true;
       }
 
-      File.AppendAllText(HashLog, hashCode + Environment.NewLine);
-      HashLogText = null;
       return false;
     }
 
@@ -234,7 +236,7 @@ namespace DICOMCapacitorWarden
         foreach(var file in files) 
         {
 
-          if (UpdateAlreadyProcessed(file))
+          if (UpdateAlreadyProcessed(StripHashCode(file.Name)))
           {
             ReturnLogFile(file);
             continue;
@@ -251,12 +253,13 @@ namespace DICOMCapacitorWarden
 
             Logger.Info($"Processing payload in {extractDir.FullName}");
             ExtractFile(extractDir.GetFiles("payload.zip")[0]);
-
             ProcessManifest(Directory.CreateDirectory(Path.Combine(extractDir.FullName, "payload")));
-            ReturnLogFile(file);
-            CleanupExtractedFiles(extractDir);
 
             LoggerWithRobot("Warden Update Completed");
+            ReturnLogFile(file);
+            CleanupExtractedFiles(extractDir);
+            LogHashCode(StripHashCode(file.Name));
+
           }
         }
         return;
