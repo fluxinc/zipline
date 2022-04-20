@@ -35,6 +35,7 @@ namespace DICOMCapacitorWarden
     internal void TestStartupAndStop(string[] args)
     {
       OnStart(args);
+      while (!QUITTING) { }
       OnStop();
     }
 
@@ -45,7 +46,6 @@ namespace DICOMCapacitorWarden
       usbEventWatcher.UsbDriveEjected += (_, path) => OnUsbDriveEjected(path);
       usbEventWatcher.UsbDriveMounted += (_, path) => OnUsbDriveMounted(path);
 
-      while (!QUITTING) { };
     }
 
     protected override void OnStop()
