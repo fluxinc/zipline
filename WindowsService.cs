@@ -20,6 +20,8 @@ namespace DICOMCapacitorWarden
 
     private static readonly string HashLog = "hash.log";
 
+    private static readonly string ClientLog = "update.log";
+
     public static string HashLogText = null;
 
     private bool QUITTING => false;
@@ -92,11 +94,23 @@ namespace DICOMCapacitorWarden
 
     private void ExecutableOperation(Manifest manifest, DirectoryInfo directory)
     {
-      Logger.Info($"Starting {manifest.Executable}");
-      ProcessStartInfo processStartInfo = new ProcessStartInfo();
-      processStartInfo.WorkingDirectory = directory.FullName;
-      processStartInfo.FileName = Path.Combine(directory.FullName, manifest.Executable);
-      Process.Start(processStartInfo);
+      var proc = new Process();
+      Logger.Info($"Starting {manifest.Executable} with args {manifest.Args}");
+
+      proc.StartInfo.WorkingDirectory = directory.FullName;
+      proc.StartInfo.FileName = Path.Combine(directory.FullName, manifest.Executable);
+      proc.StartInfo.UseShellExecute = false;
+      proc.StartInfo.RedirectStandardOutput = true;
+
+      if (!String.IsNullOrEmpty(manifest.Args))
+        proc.StartInfo.Arguments = manifest.Args;
+
+      proc.Start();
+
+      var output = proc.StandardOutput.ReadToEnd();
+      proc.WaitForExit();
+
+      if (!String.IsNullOrEmpty(output)) Logger.Info(output);
     }
 
     private void FileCopyOperation(Manifest manifest, DirectoryInfo directory)
@@ -169,8 +183,27 @@ namespace DICOMCapacitorWarden
       return false;
     }
 
+    private void CleanupExtractedFiles(DirectoryInfo dir)
+    {
+      dir.Delete(true);
+    }
+
     private void ReturnLogFile(FileInfo file)
     {
+      FileInfo log = new FileInfo(ClientLog);
+
+      DirectoryInfo returnDir =
+        Directory.CreateDirectory(Path.Combine(file.DirectoryName,
+        "log-" + Path.GetFileNameWithoutExtension(file.FullName)));
+
+      log.CopyTo(returnDir.FullName + $"\\{ClientLog}", true);
+
+      if (File.Exists(returnDir.FullName + ".zip"))
+        File.Delete(returnDir.FullName + ".zip");
+
+      ZipFile.CreateFromDirectory(returnDir.FullName, returnDir.FullName + ".zip");
+
+      returnDir.Delete(true);
       File.Delete("update.log");
       File.WriteAllText("update.log", "");
     }
@@ -205,6 +238,7 @@ namespace DICOMCapacitorWarden
 
             ProcessManifest(Directory.CreateDirectory(Path.Combine(extractDir.FullName, "payload")));
             ReturnLogFile(file);
+            CleanupExtractedFiles(extractDir);
           }
         }
         return;
