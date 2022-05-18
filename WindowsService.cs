@@ -18,9 +18,9 @@ namespace DICOMCapacitorWarden
   {
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
 
-    private static readonly string HashLog = "hash.log";
+    private static readonly string HashLog = Path.Combine(Globals.LogDirPath, "hash.log");
 
-    private static readonly string ClientLog = "update.log";
+    private static readonly string ClientLog = Path.Combine(Globals.LogDirPath, "update.log");
 
     public static string HashLogText = null;
 
@@ -212,7 +212,7 @@ namespace DICOMCapacitorWarden
         Directory.CreateDirectory(Path.Combine(file.DirectoryName,
         "log-" + Path.GetFileNameWithoutExtension(file.FullName)));
 
-      log.CopyTo(returnDir.FullName + $"\\{ClientLog}", true);
+      log.CopyTo(returnDir.FullName + $"\\{log.Name}", true);
 
       if (File.Exists(returnDir.FullName + ".zip"))
         File.Delete(returnDir.FullName + ".zip");
@@ -220,8 +220,14 @@ namespace DICOMCapacitorWarden
       ZipFile.CreateFromDirectory(returnDir.FullName, returnDir.FullName + ".zip");
 
       returnDir.Delete(true);
-      File.Delete("update.log");
-      File.WriteAllText("update.log", "");
+
+    }
+
+    private void FlushClientLog()
+    {
+      FileInfo log = new FileInfo(ClientLog);
+      File.Delete(log.FullName);
+      File.WriteAllText(log.FullName, "");
     }
 
     private void OnUsbDriveMounted(string path)
@@ -235,7 +241,7 @@ namespace DICOMCapacitorWarden
 
         foreach(var file in files) 
         {
-
+          FlushClientLog();
           if (UpdateAlreadyProcessed(StripHashCode(file.Name)))
           {
             ReturnLogFile(file);
