@@ -55,7 +55,6 @@ namespace DICOMCapacitorWarden
 
       if (!Environment.UserInteractive)
       {
-
         var servicesToRun = new ServiceBase[] { service };
         ServiceBase.Run(servicesToRun);
       }
