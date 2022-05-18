@@ -135,33 +135,35 @@ namespace DICOMCapacitorWarden
         Logger.Info("FileCopy Operation: Success");
       }
     }
-
-    private void ProcessManifest(DirectoryInfo directory)
+    private bool ManifestExists(DirectoryInfo directory)
     {
       var manifest = directory.GetFiles("manifest.yml")[0];
+      return File.Exists(manifest.FullName);
+    }
 
-      if (!File.Exists(manifest.FullName))
-      {
-        Logger.Info($"No valid manifest file found. {manifest.FullName}");
-        return;
-      }
-
+    private Manifest OpenManifest(DirectoryInfo directory)
+    {
+      var manifest = directory.GetFiles("manifest.yml")[0];
       var manifestText = File.ReadAllText(manifest.FullName);
       var deserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .Build();
-      var manifestData = deserializer.Deserialize<Manifest>(manifestText);
 
-      switch (manifestData.Operation.ToLower())
+      return deserializer.Deserialize<Manifest>(manifestText);
+    }
+
+    private void ProcessManifest(Manifest manifest, DirectoryInfo directory)
+    {
+      switch (manifest.Operation.ToLower())
       {
         case "executable":
           Logger.Info("Running Executable Operation from Manifest...");
-          ExecutableOperation(manifestData, directory);
+          ExecutableOperation(manifest, directory);
           break;
 
         case "filecopy":
           Logger.Info("Running File Copy from Manifest...");
-          FileCopyOperation(manifestData, directory);
+          FileCopyOperation(manifest, directory);
           break;
 
         default:
@@ -203,13 +205,31 @@ namespace DICOMCapacitorWarden
       dir.Delete(true);
     }
 
+    private DirectoryInfo GenerateReturnDirectory(FileInfo file)
+    {
+      return Directory.CreateDirectory(Path.Combine(file.DirectoryName,
+        "log-" + Path.GetFileNameWithoutExtension(file.FullName)));
+    }
+
+    private void ReturnManifestDefinedFiles(Manifest manifest, FileInfo file, DirectoryInfo payloadDir)
+    {
+      DirectoryInfo returndir = GenerateReturnDirectory(file);
+      var returnFile = payloadDir.GetFiles(manifest.ReturnFile)[0];
+
+      if (returnFile.Exists)
+      {
+        returnFile.CopyTo(returndir.FullName + $"\\{returnFile.Name}", true);
+        Logger.Info($"Copying requested return file {returnFile.Name} to {returndir.Name}");
+        return;
+      }
+      Logger.Info($"Warden couldn't find requested return file {returnFile.Name}");
+    }
+
     private void ReturnLogFile(FileInfo file)
     {
       FileInfo log = new FileInfo(ClientLog);
 
-      DirectoryInfo returnDir =
-        Directory.CreateDirectory(Path.Combine(file.DirectoryName,
-        "log-" + Path.GetFileNameWithoutExtension(file.FullName)));
+      DirectoryInfo returnDir = GenerateReturnDirectory(file);
 
       log.CopyTo(returnDir.FullName + $"\\{log.Name}", true);
 
@@ -257,20 +277,32 @@ namespace DICOMCapacitorWarden
 
             Logger.Info($"Processing payload in {extractDir.FullName}");
             ExtractFile(extractDir.GetFiles("payload.zip")[0]);
-            ProcessManifest(Directory.CreateDirectory(Path.Combine(extractDir.FullName, "payload")));
 
-            LoggerWithRobot("Warden Update Completed");
+            var payloadDir = Directory.CreateDirectory(Path.Combine(extractDir.FullName, "payload"));
+
+            if (ManifestExists(payloadDir))
+            {
+              Logger.Info("Opening Manifest...");
+              var manifest = OpenManifest(payloadDir);
+
+              ProcessManifest(manifest, payloadDir);
+              LoggerWithRobot("Warden Update Completed");
+              ReturnManifestDefinedFiles(manifest, file, payloadDir);
+              ReturnLogFile(file);
+              CleanupExtractedFiles(extractDir);
+              LogHashCode(StripHashCode(file.Name));
+              continue;
+            }
+
+            LoggerWithRobot("Warden Update Failed");
             ReturnLogFile(file);
             CleanupExtractedFiles(extractDir);
-            LogHashCode(StripHashCode(file.Name));
-
           }
         }
         return;
       }
       Logger.Error($"{dir.FullName} does not exist.");
     }
-
 
     private void OnUsbDriveEjected(string path)
     {
