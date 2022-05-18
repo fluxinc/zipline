@@ -32,7 +32,7 @@ Source: "..\bin\{#MyAppConfiguration}\*.dll"; DestDir: "{app}"; Flags: ignorever
 Source: "..\bin\{#MyAppConfiguration}\*.pdb"; DestDir: "{app}"; Flags: ignoreversion;
 Source: "..\bin\{#MyAppConfiguration}\*.xml"; DestDir: "{app}"; Flags: ignoreversion;
 Source: "..\bin\{#MyAppConfiguration}\DICOMCapacitorWarden.*"; DestDir: "{app}"; Flags: ignoreversion;
-Source: "..\bin\{#MyAppConfiguration}\*.asc"; DestDir: "{app}"; Flags: ignoreversion;
+
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop DICOMCapacitorWarden"; Description: Stopping service; WorkingDir: {app}; Check: IsServiceRunning('DICOMCapacitorWarden');
 Filename: "{app}\DICOMCapacitorWarden.exe"; Parameters: "--install"; Description: Installing service; WorkingDir: {app}; Flags: runhidden;

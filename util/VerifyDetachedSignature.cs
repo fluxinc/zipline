@@ -57,11 +57,10 @@ ZQ==
         string fileName,
         string inputFileName)
     {
-      using (Stream input = File.OpenRead(inputFileName),
-          keyIn = new MemoryStream(Encoding.UTF8.GetBytes(FluxPublicKey)))
-      {
-        return VerifySignature(fileName, input, keyIn);
-      }
+      using var input = File.OpenRead(inputFileName);
+      using var keyIn = new MemoryStream(Encoding.UTF8.GetBytes(FluxPublicKey));
+
+      return VerifySignature(fileName, input, keyIn);
     }
 
     public static bool VerifySignature(
