@@ -1,16 +1,15 @@
-﻿using System;
-using System.IO;
-using System.ServiceProcess;
-using Usb.Events;
-using static Warden.util.VerifyDetachedSignature;
+﻿using DICOMCapacitorWarden.util;
 using log4net;
+using System;
+using System.Diagnostics;
+using System.IO;
 using System.IO.Compression;
+using System.ServiceProcess;
+using System.Text.RegularExpressions;
+using Usb.Events;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using DICOMCapacitorWarden.util;
-using System.Diagnostics;
-using System.Speech.Synthesis;
-using System.Text.RegularExpressions;
+using static Warden.util.VerifyDetachedSignature;
 
 namespace DICOMCapacitorWarden
 {
@@ -18,9 +17,9 @@ namespace DICOMCapacitorWarden
   {
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
 
-    private static readonly string HashLog = "hash.log";
+    private static readonly string HashLog = Path.Combine(Globals.LogDirPath, "hash.log");
 
-    private static readonly string ClientLog = "update.log";
+    private static readonly string ClientLog = Path.Combine(Globals.LogDirPath, "update.log");
 
     public static string HashLogText = null;
 
@@ -67,7 +66,7 @@ namespace DICOMCapacitorWarden
         // In this method we can just sign .zips using pgp.
         // If the .zip is modified the signature should fail
         // giving us checksums for free too. 
-       
+
         if (VerifySignature(fileInfo.FullName, signature.FullName))
         {
           Logger.Info($"{file.FullName}: VERIFIED");
@@ -188,11 +187,11 @@ namespace DICOMCapacitorWarden
       if (!File.Exists(HashLog)) File.Create(HashLog);
 
       if (HashLogText == null) HashLogText = File.ReadAllText(HashLog);
-      
+
       if (HashLogText.Contains(hashCode + Environment.NewLine))
       {
         Logger.Info($"{hashCode} has already been processed.");
-        
+
         return true;
       }
 
@@ -212,7 +211,7 @@ namespace DICOMCapacitorWarden
         Directory.CreateDirectory(Path.Combine(file.DirectoryName,
         "log-" + Path.GetFileNameWithoutExtension(file.FullName)));
 
-      log.CopyTo(returnDir.FullName + $"\\{ClientLog}", true);
+      log.CopyTo(returnDir.FullName + $"\\{log.Name}", true);
 
       if (File.Exists(returnDir.FullName + ".zip"))
         File.Delete(returnDir.FullName + ".zip");
@@ -220,8 +219,13 @@ namespace DICOMCapacitorWarden
       ZipFile.CreateFromDirectory(returnDir.FullName, returnDir.FullName + ".zip");
 
       returnDir.Delete(true);
-      File.Delete("update.log");
-      File.WriteAllText("update.log", "");
+    }
+
+    private void FlushClientLog()
+    {
+      FileInfo log = new FileInfo(ClientLog);
+      File.Delete(log.FullName);
+      File.WriteAllText(log.FullName, "");
     }
 
     private void OnUsbDriveMounted(string path)
@@ -233,9 +237,9 @@ namespace DICOMCapacitorWarden
       {
         var files = dir.GetFiles("WARDEN*.zip");
 
-        foreach(var file in files) 
+        foreach (var file in files)
         {
-
+          FlushClientLog();
           if (UpdateAlreadyProcessed(StripHashCode(file.Name)))
           {
             ReturnLogFile(file);
@@ -266,7 +270,7 @@ namespace DICOMCapacitorWarden
       }
       Logger.Error($"{dir.FullName} does not exist.");
     }
-    
+
 
     private void OnUsbDriveEjected(string path)
     {
