@@ -1,6 +1,6 @@
 The .zip file is a sample payload.
 
-WARDEN-0xDEADBEEF.zip -- Executable example
+WARDEN-2909e0a4a1955005cbe89b342bfb6cbd90f44ff548a834bff9de827ba9049702.zip -- DicomCapacitorService installer (Inno)
 
 WARDEN-0xFC0.zip -- FileCopy example
 
