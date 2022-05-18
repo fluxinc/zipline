@@ -13,6 +13,6 @@ namespace DICOMCapacitorWarden.util
     public string Args { get; set; }
     public string Services { get; set; }
     public string Executable { get; set; }
-
+    public string ReturnFile { get; set; }
   }
 }
