@@ -4,9 +4,7 @@ command: .\script1.bat
 arguments: '-path "%ProgramData%\\Flux Inc\\DICOM Capacitor"'
 ---
 type: run
-command: |
-  net stop DICOMCapacitorService
-  net start DICOMCapacitorService
+command: restartDicomCapacitor.ps1
 ---
 type: run
 command: DICOMCapacitorService --install
