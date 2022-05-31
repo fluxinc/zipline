@@ -283,7 +283,7 @@ namespace DICOMCapacitorWarden
 
       var payloadZipFile = extractUpdateFolder.GetFiles("payload.zip")[0];
 
-      if (extractUpdateFolder.Exists && FileVerification(payloadZipFile))
+      if (FileVerification(payloadZipFile))
       {
         ExtractFile(payloadZipFile, extractUpdateFolder.FullName);
         return Directory.CreateDirectory(Path.Combine(extractUpdateFolder.FullName, "payload"));
