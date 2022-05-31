@@ -319,6 +319,7 @@ namespace DICOMCapacitorWarden
       }
 
       LoggerWithRobot($"Warden update completed with {UpdateErrors} error(s).");
+      UpdateErrors = 0;
       ReturnLogFile(updateZipFile);
       CleanupExtractedFiles(updateZipFile);
       LogHashCode(StripHashCode(updateZipFile.Name));
