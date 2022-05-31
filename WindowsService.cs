@@ -272,6 +272,7 @@ namespace DICOMCapacitorWarden
       File.Delete(log.FullName);
       File.WriteAllText(log.FullName, "");
     }
+
     private DirectoryInfo GetPayloadDirectory(FileInfo updateZipFile)
     {
       ExtractFile(updateZipFile, Path.GetTempPath());
