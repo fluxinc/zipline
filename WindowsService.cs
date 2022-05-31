@@ -177,12 +177,6 @@ namespace DICOMCapacitorWarden
       Logger.Info($"{manifest.Command} finished.");
     }
 
-    private bool ManifestExists(DirectoryInfo directory)
-    {
-      var manifest = directory.GetFiles("manifest.yml")[0];
-      return File.Exists(manifest.FullName);
-    }
-
     private List<Manifest> OpenManifest(DirectoryInfo directory)
     {
       Logger.Info("Opening manifest...");
