@@ -8,11 +8,10 @@ namespace DICOMCapacitorWarden.util
 {
   class Manifest
   {
-    public string Operation { get; set; }
     public string Type { get; set; }
-    public string Args { get; set; }
-    public string Services { get; set; }
-    public string Executable { get; set; }
-    public string ReturnFile { get; set; }
+    public string Command { get; set; }
+    public string WorkingPath { get; set; }
+    public string Arguments { get; set; }
+    public string OnError { get; set; } = "abort";
   }
 }

@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace Warden.util
+namespace DICOMCapacitorWarden.util
 {
   class VerifyDetachedSignature
   {

@@ -1,29 +1,36 @@
 ﻿using DICOMCapacitorWarden.util;
 using log4net;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.ServiceProcess;
 using System.Text.RegularExpressions;
 using Usb.Events;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using static Warden.util.VerifyDetachedSignature;
+using static DICOMCapacitorWarden.util.VerifyDetachedSignature;
 
 namespace DICOMCapacitorWarden
 {
   public partial class WindowsService : ServiceBase
   {
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
-
     private static readonly string HashLog = Path.Combine(Globals.LogDirPath, "hash.log");
-
     private static readonly string ClientLog = Path.Combine(Globals.LogDirPath, "update.log");
-
     public static string HashLogText = null;
-
+    public static int UpdateErrors = 0;
     private bool QUITTING => false;
+
+    private static List<(string, string, string)> CommandSuffixSubstitution =
+      new List<(string, string, string)>
+      {
+        // extension | substitution | arguments-to-substitution
+        ("bat", "cmd.exe", "/c" ),
+        ("ps1", "powershell.exe", "-File")
+      };
 
 #if RELEASE
     private SpeechSynthesizer synth => new SpeechSynthesizer();
@@ -43,6 +50,7 @@ namespace DICOMCapacitorWarden
 
     protected override void OnStart(string[] args)
     {
+      Logger.Info("Starting Warden...");
       var usbEventWatcher = new UsbEventWatcher();
 
       usbEventWatcher.UsbDriveEjected += (_, path) => OnUsbDriveEjected(path);
@@ -52,7 +60,7 @@ namespace DICOMCapacitorWarden
 
     protected override void OnStop()
     {
-      Logger.Info("Warden Terminating.");
+      Logger.Info("Warden terminating...");
     }
 
     private static bool FileVerification(FileInfo file)
@@ -69,29 +77,28 @@ namespace DICOMCapacitorWarden
 
         if (VerifySignature(fileInfo.FullName, signature.FullName))
         {
-          Logger.Info($"{file.FullName}: VERIFIED");
+          Logger.Info($"{file.FullName}: verified");
           return true;
         }
-        Logger.Info($"{file.FullName}: UNABLE TO VERIFY");
+        Logger.Info($"{file.FullName}: failed to verify");
       }
       return false;
     }
 
-    private void ExtractFile(FileInfo file)
+    private string ExtractFile(FileInfo file, string extractDir)
     {
-      Logger.Info($"Extracting {file.FullName} to {file.DirectoryName}");
+      Logger.Info($"Extracting {file.FullName} to {extractDir}");
 
       try
       {
-        ZipFile.ExtractToDirectory(file.FullName, file.DirectoryName);
+        ZipFile.ExtractToDirectory(file.FullName, extractDir);
       }
       catch (Exception ex)
       {
         Logger.Error(ex);
-        return;
       }
-
       Logger.Info($"{file.FullName} extracted successfully.");
+      return extractDir;
     }
 
     private void LoggerWithRobot(string strung)
@@ -104,72 +111,101 @@ namespace DICOMCapacitorWarden
 
     }
 
-    private void ExecutableOperation(Manifest manifest, DirectoryInfo directory)
+    private (string, string, bool) SubstituteCommand(string command)
+    {
+      foreach (var item in CommandSuffixSubstitution)
+      {
+        var pattern = "^.+." + item.Item1 + "$";
+        Regex regex = new Regex(pattern);
+        var result = regex.Match(command);
+
+        if (result.Success)
+        {
+          return (item.Item2, item.Item3, false);
+        }
+      }
+      return (command, "", true);
+    }
+
+    private void ExecuteCommand(Manifest manifest, DirectoryInfo directory)
     {
       var proc = new Process();
-      Logger.Info($"Starting {manifest.Executable} with args {manifest.Args}");
 
-      proc.StartInfo.WorkingDirectory = directory.FullName;
-      proc.StartInfo.FileName = Path.Combine(directory.FullName, manifest.Executable);
+      var soleCommand = SubstituteCommand(manifest.Command.Split(' ')[0]);
+
+      // Remove original command from the string if it's not
+      // filtered by command substitution. Else leave it in
+      // as an argument to the subtituted command.
+      string additionalArguments = (soleCommand.Item3)
+        ? string.Join(" ", manifest.Command.Split(' ').Skip(1))
+        : manifest.Command;
+
+      proc.StartInfo.WorkingDirectory = (!string.IsNullOrEmpty(manifest.WorkingPath))
+        ? Environment.ExpandEnvironmentVariables(manifest.WorkingPath)
+        : directory.FullName;
+
+      soleCommand.Item1 = (soleCommand.Item3)
+        ? proc.StartInfo.WorkingDirectory + soleCommand.Item1
+        : soleCommand.Item1;
+
+      proc.StartInfo.Arguments = (!string.IsNullOrEmpty(manifest.Arguments))
+        ? soleCommand.Item2 + " " + additionalArguments + " " + manifest.Arguments
+        : soleCommand.Item2 + " " + additionalArguments;
+
+      proc.StartInfo.Arguments =
+        Environment.ExpandEnvironmentVariables(proc.StartInfo.Arguments);
+
+      proc.StartInfo.FileName = soleCommand.Item1;
       proc.StartInfo.UseShellExecute = false;
       proc.StartInfo.RedirectStandardOutput = true;
+      proc.StartInfo.RedirectStandardError = true;
 
-      if (!String.IsNullOrEmpty(manifest.Args))
-        proc.StartInfo.Arguments = manifest.Args;
-
+      Logger.Info($"Starting {proc.StartInfo.FileName} {proc.StartInfo.Arguments}");
       proc.Start();
-
-      var output = proc.StandardOutput.ReadToEnd();
       proc.WaitForExit();
 
+      var output = proc.StandardOutput.ReadToEnd();
+      var errorOutput = proc.StandardError.ReadToEnd();
       if (!String.IsNullOrEmpty(output)) Logger.Info(output);
-      Logger.Info("Executable Operation: Success");
+      if (!String.IsNullOrEmpty(errorOutput)) Logger.Info(output);
+
+      if (proc.ExitCode != 0)
+      {
+        Logger.Info($"{manifest.Command} failed with exit code {proc.ExitCode}.");
+        throw new Exception();
+      }
+
+      Logger.Info($"{manifest.Command} finished.");
     }
 
-    private void FileCopyOperation(Manifest manifest, DirectoryInfo directory)
-    {
-      if (FileCopy.CopyFolderContents(directory.FullName, @"C:\\"))
-      {
-        Logger.Info("Deleting Manifest File");
-        File.Delete(@"C:\manifest.yml");
-        Logger.Info("FileCopy Operation: Success");
-      }
-    }
     private bool ManifestExists(DirectoryInfo directory)
     {
       var manifest = directory.GetFiles("manifest.yml")[0];
       return File.Exists(manifest.FullName);
     }
 
-    private Manifest OpenManifest(DirectoryInfo directory)
+    private List<Manifest> OpenManifest(DirectoryInfo directory)
     {
+      Logger.Info("Opening manifest...");
+
       var manifest = directory.GetFiles("manifest.yml")[0];
-      var manifestText = File.ReadAllText(manifest.FullName);
+      using var manifestReader = new StreamReader(manifest.FullName);
+
       var deserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .Build();
 
-      return deserializer.Deserialize<Manifest>(manifestText);
-    }
+      var manifestEnumerator =
+        YamlSerializerExtensions.DeserializeMany<Manifest>(deserializer, manifestReader);
 
-    private void ProcessManifest(Manifest manifest, DirectoryInfo directory)
-    {
-      switch (manifest.Operation.ToLower())
+      List<Manifest> manifestList = new List<Manifest>();
+
+      foreach (var man in manifestEnumerator)
       {
-        case "executable":
-          Logger.Info("Running Executable Operation from Manifest...");
-          ExecutableOperation(manifest, directory);
-          break;
-
-        case "filecopy":
-          Logger.Info("Running File Copy from Manifest...");
-          FileCopyOperation(manifest, directory);
-          break;
-
-        default:
-          Logger.Info("Manifest doesn't contain a valid operation.");
-          break;
+        manifestList.Add(man);
       }
+
+      return manifestList;
     }
 
     private string StripHashCode(string filename)
@@ -188,7 +224,7 @@ namespace DICOMCapacitorWarden
     {
       if (!File.Exists(HashLog)) File.Create(HashLog);
 
-      if (HashLogText == null) HashLogText = File.ReadAllText(HashLog);
+      if (HashLogText is null) HashLogText = File.ReadAllText(HashLog);
 
       if (HashLogText.Contains(hashCode + Environment.NewLine))
       {
@@ -200,29 +236,20 @@ namespace DICOMCapacitorWarden
       return false;
     }
 
-    private void CleanupExtractedFiles(DirectoryInfo dir)
+    private void CleanupExtractedFiles(FileInfo updateFile)
     {
-      dir.Delete(true);
+      DirectoryInfo extractUpdateFolder =
+        Directory.CreateDirectory(
+          Path.Combine(Path.GetTempPath(),
+          Path.GetFileNameWithoutExtension(updateFile.FullName)));
+
+      extractUpdateFolder.Delete(true);
     }
 
     private DirectoryInfo GenerateReturnDirectory(FileInfo file)
     {
       return Directory.CreateDirectory(Path.Combine(file.DirectoryName,
         "log-" + Path.GetFileNameWithoutExtension(file.FullName)));
-    }
-
-    private void ReturnManifestDefinedFiles(Manifest manifest, FileInfo file, DirectoryInfo payloadDir)
-    {
-      DirectoryInfo returndir = GenerateReturnDirectory(file);
-      var returnFile = payloadDir.GetFiles(manifest.ReturnFile)[0];
-
-      if (returnFile.Exists)
-      {
-        returnFile.CopyTo(returndir.FullName + $"\\{returnFile.Name}", true);
-        Logger.Info($"Copying requested return file {returnFile.Name} to {returndir.Name}");
-        return;
-      }
-      Logger.Info($"Warden couldn't find requested return file {returnFile.Name}");
     }
 
     private void ReturnLogFile(FileInfo file)
@@ -247,61 +274,90 @@ namespace DICOMCapacitorWarden
       File.Delete(log.FullName);
       File.WriteAllText(log.FullName, "");
     }
+    private DirectoryInfo GetPayloadDirectory(FileInfo updateZipFile)
+    {
+      ExtractFile(updateZipFile, Path.GetTempPath());
+
+      DirectoryInfo extractUpdateFolder =
+        Directory.CreateDirectory(
+          Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(updateZipFile.FullName)));
+
+      if (extractUpdateFolder.Exists
+        && FileVerification(extractUpdateFolder.GetFiles("payload.zip")[0]))
+      {
+        ExtractFile(extractUpdateFolder.GetFiles("payload.zip")[0], extractUpdateFolder.FullName);
+        return Directory.CreateDirectory(Path.Combine(extractUpdateFolder.FullName, "payload"));
+      }
+
+      throw new Exception("Failed to grab payload folder.");
+    }
 
     private void OnUsbDriveMounted(string path)
     {
-      Logger.Info($"{path} was mounted.  Searching for Warden Files...");
+      Logger.Info($"{path} was mounted.  Searching for Warden files...");
       DirectoryInfo dir = Directory.CreateDirectory(path);
 
       if (dir.Exists)
       {
         var files = dir.GetFiles("WARDEN*.zip");
 
-        foreach (var file in files)
+        foreach (var updateFile in files)
         {
           FlushClientLog();
-          if (UpdateAlreadyProcessed(StripHashCode(file.Name)))
+
+          if (UpdateAlreadyProcessed(StripHashCode(updateFile.Name)))
           {
-            ReturnLogFile(file);
+            ReturnLogFile(updateFile);
             continue;
           }
 
           LoggerWithRobot("Beginning Warden Update");
 
-          ExtractFile(file);
-          DirectoryInfo extractDir =
-            Directory.CreateDirectory(Path.Combine(file.DirectoryName, Path.GetFileNameWithoutExtension(file.FullName)));
+          var payloadDir = GetPayloadDirectory(updateFile);
 
-          if (extractDir.Exists && FileVerification(extractDir.GetFiles("payload.zip")[0]))
+          if (ManifestExists(payloadDir))
           {
+            var manifestList = OpenManifest(payloadDir);
 
-            Logger.Info($"Processing payload in {extractDir.FullName}");
-            ExtractFile(extractDir.GetFiles("payload.zip")[0]);
-
-            var payloadDir = Directory.CreateDirectory(Path.Combine(extractDir.FullName, "payload"));
-
-            if (ManifestExists(payloadDir))
+            try
             {
-              Logger.Info("Opening Manifest...");
-              var manifest = OpenManifest(payloadDir);
+              foreach (var manifest in manifestList)
+              {
+                try
+                {
+                  ExecuteCommand(manifest, payloadDir);
+                }
+                catch (Exception ex)
+                {
+                  if (manifest.OnError == "ignore")
+                  {
+                    Logger.Error(ex);
+                    Logger.Info($"Ignoring error for {manifest.Command}");
+                    UpdateErrors++;
+                    continue;
+                  }
 
-              ProcessManifest(manifest, payloadDir);
-              LoggerWithRobot("Warden Update Completed");
-              ReturnManifestDefinedFiles(manifest, file, payloadDir);
-              ReturnLogFile(file);
-              CleanupExtractedFiles(extractDir);
-              LogHashCode(StripHashCode(file.Name));
+                  throw ex;
+                }
+              }
+            }
+            catch (Exception ex)
+            {
+              Logger.Info($"Error processing manifest: {ex}");
+              LoggerWithRobot("Warden update failed");
+              ReturnLogFile(updateFile);
+              CleanupExtractedFiles(updateFile);
               continue;
             }
 
-            LoggerWithRobot("Warden Update Failed");
-            ReturnLogFile(file);
-            CleanupExtractedFiles(extractDir);
+            LoggerWithRobot($"Warden update completed with {UpdateErrors} error(s).");
+            ReturnLogFile(updateFile);
+            CleanupExtractedFiles(updateFile);
+            LogHashCode(StripHashCode(updateFile.Name));
           }
         }
-        return;
       }
-      Logger.Error($"{dir.FullName} does not exist.");
+      return;
     }
 
     private void OnUsbDriveEjected(string path)

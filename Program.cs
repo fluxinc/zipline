@@ -15,12 +15,9 @@ namespace DICOMCapacitorWarden
 {
   internal static class Program
   {
-
     private const string ServiceName = "DicomCapacitorWarden";
     public static bool Quitting;
-    /// <summary>
-    /// The main entry point for the application.
-    /// </summary>
+
     static void Main(string[] args)
     {
 
@@ -46,6 +43,7 @@ namespace DICOMCapacitorWarden
       if (Quitting) return;
 
       SetupLog4Net();
+
       // Ensure the cwd is set properly.
       FileInfo file = new FileInfo(Assembly.GetExecutingAssembly().Location);
       string cwd = file.DirectoryName;

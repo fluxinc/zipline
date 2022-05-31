@@ -106,8 +106,8 @@
     <Compile Include="ProjectInstaller.Designer.cs">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
+    <Compile Include="util\YamlSerializerExtensions.cs" />
     <Compile Include="util\Globals.cs" />
-    <Compile Include="util\FileCopy.cs" />
     <Compile Include="util\Manifest.cs" />
     <Compile Include="util\VerifyDetachedSignature.cs" />
     <Compile Include="WindowsService.cs">
