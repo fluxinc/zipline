@@ -8,7 +8,6 @@ namespace DICOMCapacitorWarden
   public partial class WindowsService : ServiceBase
   {
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
-
     private static bool Quitting => false;
 
     public WindowsService()

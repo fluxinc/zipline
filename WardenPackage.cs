@@ -21,7 +21,6 @@ namespace DICOMCapacitorWarden
     public static string HashLogText = null;
     public static int UpdateErrors = 0;
 
-
     private static List<(string, string, string)> CommandSuffixSubstitution =
       new List<(string, string, string)>
       {
@@ -60,9 +59,9 @@ namespace DICOMCapacitorWarden
       }
       catch (Exception ex)
       {
-        Logger.Error(ex);
         throw new Exception($"Failed to extract {file.FullName}", ex);
       }
+
       Logger.Info($"{file.FullName} extracted successfully.");
       return extractDir;
     }
@@ -131,11 +130,7 @@ namespace DICOMCapacitorWarden
       if (!String.IsNullOrEmpty(output)) Logger.Info(output);
       if (!String.IsNullOrEmpty(errorOutput)) Logger.Info(output);
 
-      if (proc.ExitCode != 0)
-      {
-        Logger.Info($"{manifest.Command} failed with exit code {proc.ExitCode}.");
-        throw new Exception();
-      }
+      if (proc.ExitCode != 0) throw new Exception($"{manifest.Command} failed with exit code {proc.ExitCode}.");
 
       Logger.Info($"{manifest.Command} finished.");
     }
@@ -143,9 +138,11 @@ namespace DICOMCapacitorWarden
     private static List<Manifest> OpenManifest(DirectoryInfo directory)
     {
       Logger.Info("Opening manifest...");
+
       try
       {
         var manifestFile = directory.GetFiles("manifest.yml")[0];
+
         using var manifestReader = new StreamReader(manifestFile.FullName);
 
         var deserializer = new DeserializerBuilder()
@@ -157,10 +154,7 @@ namespace DICOMCapacitorWarden
 
         List<Manifest> manifests = new List<Manifest>();
 
-        foreach (var manifest in manifestEnumerator)
-        {
-          manifests.Add(manifest);
-        }
+        foreach (var manifest in manifestEnumerator) manifests.Add(manifest);
 
         return manifests;
       }
@@ -277,7 +271,6 @@ namespace DICOMCapacitorWarden
       }
 
       LoggerWithRobot($"Warden update completed with {UpdateErrors} error(s).");
-      UpdateErrors = 0;
       ReturnLogFile(updateZipFile);
       CleanupExtractedFiles(updateZipFile);
       LogHashCode(StripHashCode(updateZipFile.Name));
@@ -286,6 +279,7 @@ namespace DICOMCapacitorWarden
     public static void ProcessUpdate(FileInfo updateZipFile)
     {
       FlushClientLog();
+      UpdateErrors = 0;
 
       if (UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
       {
