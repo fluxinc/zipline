@@ -231,14 +231,7 @@ namespace DICOMCapacitorWarden
 
       if (HashLogText is null) HashLogText = File.ReadAllText(HashLog);
 
-      if (HashLogText.Contains(hashCode + Environment.NewLine))
-      {
-        Logger.Info($"{hashCode} has already been processed.");
-
-        return true;
-      }
-
-      return false;
+      return HashLogText.Contains(hashCode + Environment.NewLine);
     }
 
     private void CleanupExtractedFiles(FileInfo updateFile)
@@ -351,6 +344,7 @@ namespace DICOMCapacitorWarden
 
           if (UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
           {
+            Logger.Info($"{updateZipFile} has already been processed.");
             ReturnLogFile(updateZipFile);
             continue;
           }
