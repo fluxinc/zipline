@@ -187,25 +187,31 @@ namespace DICOMCapacitorWarden
     private List<Manifest> OpenManifest(DirectoryInfo directory)
     {
       Logger.Info("Opening manifest...");
-
-      var manifest = directory.GetFiles("manifest.yml")[0];
-      using var manifestReader = new StreamReader(manifest.FullName);
-
-      var deserializer = new DeserializerBuilder()
-        .WithNamingConvention(CamelCaseNamingConvention.Instance)
-        .Build();
-
-      var manifestEnumerator =
-        YamlSerializerExtensions.DeserializeMany<Manifest>(deserializer, manifestReader);
-
-      List<Manifest> manifestList = new List<Manifest>();
-
-      foreach (var man in manifestEnumerator)
+      try
       {
-        manifestList.Add(man);
-      }
+        var manifestFile = directory.GetFiles("manifest.yml")[0];
+        using var manifestReader = new StreamReader(manifestFile.FullName);
 
-      return manifestList;
+        var deserializer = new DeserializerBuilder()
+          .WithNamingConvention(CamelCaseNamingConvention.Instance)
+          .Build();
+
+        var manifestEnumerator =
+          YamlSerializerExtensions.DeserializeMany<Manifest>(deserializer, manifestReader);
+
+        List<Manifest> manifests = new List<Manifest>();
+
+        foreach (var manifest in manifestEnumerator)
+        {
+          manifests.Add(manifest);
+        }
+
+        return manifests;
+      }
+      catch (Exception ex)
+      {
+        throw new Exception("Invalid or missing manifest.", ex);
+      }
     }
 
     private string StripHashCode(string filename)
@@ -282,15 +288,49 @@ namespace DICOMCapacitorWarden
         Directory.CreateDirectory(
           Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(updateZipFile.FullName)));
 
-      if (extractUpdateFolder.Exists
-        && FileVerification(extractUpdateFolder.GetFiles("payload.zip")[0]))
+      var payloadZipFile = extractUpdateFolder.GetFiles("payload.zip")[0];
+
+      if (extractUpdateFolder.Exists && FileVerification(payloadZipFile))
       {
-        ExtractFile(extractUpdateFolder.GetFiles("payload.zip")[0], extractUpdateFolder.FullName);
+        ExtractFile(payloadZipFile, extractUpdateFolder.FullName);
         return Directory.CreateDirectory(Path.Combine(extractUpdateFolder.FullName, "payload"));
       }
-
-      throw new Exception("Failed to grab payload folder.");
+      throw new Exception("Bad payload signature or missing payload.");
     }
+
+    private void ProcessManifest(FileInfo updateZipFile)
+    {
+      var payloadDir = GetPayloadDirectory(updateZipFile);
+      var manifests = OpenManifest(payloadDir);
+
+      foreach (var manifest in manifests)
+      {
+        try
+        {
+          ExecuteCommand(manifest, payloadDir);
+        }
+        catch (Exception ex)
+        {
+          if (manifest.OnError == "ignore")
+          {
+            Logger.Error(ex);
+            Logger.Info($"Ignoring error for {manifest.Command}");
+            UpdateErrors++;
+            continue;
+          }
+
+          throw ex;
+        }
+      }
+
+      LoggerWithRobot($"Warden update completed with {UpdateErrors} error(s).");
+      ReturnLogFile(updateZipFile);
+      CleanupExtractedFiles(updateZipFile);
+      LogHashCode(StripHashCode(updateZipFile.Name));
+    }
+
+
+
 
     private void OnUsbDriveMounted(string path)
     {
@@ -301,64 +341,35 @@ namespace DICOMCapacitorWarden
       {
         var files = dir.GetFiles("WARDEN*.zip");
 
-        foreach (var updateFile in files)
+        foreach (var updateZipFile in files)
         {
           FlushClientLog();
 
-          if (UpdateAlreadyProcessed(StripHashCode(updateFile.Name)))
+          if (UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
           {
-            ReturnLogFile(updateFile);
+            ReturnLogFile(updateZipFile);
             continue;
           }
 
           LoggerWithRobot("Beginning Warden Update");
 
-          var payloadDir = GetPayloadDirectory(updateFile);
-
-          if (ManifestExists(payloadDir))
+          try
           {
-            var manifestList = OpenManifest(payloadDir);
-
-            try
-            {
-              foreach (var manifest in manifestList)
-              {
-                try
-                {
-                  ExecuteCommand(manifest, payloadDir);
-                }
-                catch (Exception ex)
-                {
-                  if (manifest.OnError == "ignore")
-                  {
-                    Logger.Error(ex);
-                    Logger.Info($"Ignoring error for {manifest.Command}");
-                    UpdateErrors++;
-                    continue;
-                  }
-
-                  throw ex;
-                }
-              }
-            }
-            catch (Exception ex)
-            {
-              Logger.Info($"Error processing manifest: {ex}");
-              LoggerWithRobot("Warden update failed");
-              ReturnLogFile(updateFile);
-              CleanupExtractedFiles(updateFile);
-              continue;
-            }
-
-            LoggerWithRobot($"Warden update completed with {UpdateErrors} error(s).");
-            ReturnLogFile(updateFile);
-            CleanupExtractedFiles(updateFile);
-            LogHashCode(StripHashCode(updateFile.Name));
+            ProcessManifest(updateZipFile);
+          }
+          catch (Exception ex)
+          {
+            Logger.Info($"Error processing manifest: {ex}");
+            LoggerWithRobot("Warden update failed");
+            ReturnLogFile(updateZipFile);
+            CleanupExtractedFiles(updateZipFile);
+            continue;
           }
         }
       }
       return;
     }
+
 
     private void OnUsbDriveEjected(string path)
     {
