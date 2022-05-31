@@ -95,6 +95,7 @@ namespace DICOMCapacitorWarden
       catch (Exception ex)
       {
         Logger.Error(ex);
+        throw new Exception($"Failed to extract {file.FullName}", ex);
       }
       Logger.Info($"{file.FullName} extracted successfully.");
       return extractDir;
