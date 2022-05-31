@@ -305,7 +305,15 @@ namespace DICOMCapacitorWarden
       {
         try
         {
-          ExecuteCommand(manifest, payloadDir);
+          switch (manifest.Type.ToLower())
+          {
+            case "run":
+              ExecuteCommand(manifest, payloadDir);
+              break;
+            default:
+              Logger.Info($"Type {manifest.Type} unimplemented.");
+              break;
+          }
         }
         catch (Exception ex)
         {
