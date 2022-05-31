@@ -19,11 +19,11 @@ namespace DICOMCapacitorWarden.util
       var reader = new Parser(input);
       reader.Consume<StreamStart>();
 
-      while (reader.TryConsume<DocumentStart>(out DocumentStart dummyStart))
+      while (reader.TryConsume<DocumentStart>(out var dummyStart))
       {
         var item = deserializer.Deserialize<TItem>(reader);
         yield return item;
-        reader.TryConsume<DocumentEnd>(out DocumentEnd dummyEnd);
+        reader.TryConsume<DocumentEnd>(out var dummyEnd);
       }
     }
   }

@@ -1,14 +1,13 @@
-﻿using Org.BouncyCastle.Bcpg.OpenPgp;
-using System.IO;
+﻿using System.IO;
 using System.Text;
+using Org.BouncyCastle.Bcpg.OpenPgp;
 
 namespace DICOMCapacitorWarden.util
 {
-  class VerifyDetachedSignature
-  {
-
-    private static readonly string FluxPublicKey =
-@"-----BEGIN PGP PUBLIC KEY BLOCK-----
+    internal static class VerifyDetachedSignature
+    {
+        private static readonly string FluxPublicKey =
+            @"-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQGNBGJduSYBDAD9NiWwAHfNQkTy4YKc9M8ZIdPpbeyjl2A1GSoIzZ64wWnZNYct
 rbKgDaLi2iwA+ZmFZ4cCH2si6B6BZvj6/mEOs8bOUll+PzX7Hwf+j+MahNZnqFm/
@@ -50,58 +49,54 @@ ZQ==
 =Z3/r
 -----END PGP PUBLIC KEY BLOCK-----";
 
-    // If we want to use detached signatures. Modified for our use.
-    // https://github.com/bcgit/bc-csharp/blob/master/crypto/test/src/openpgp/examples/DetachedSignatureProcessor.cs
+        // If we want to use detached signatures. Modified for our use.
+        // https://github.com/bcgit/bc-csharp/blob/master/crypto/test/src/openpgp/examples/DetachedSignatureProcessor.cs
 
-    public static bool VerifySignature(
-        string fileName,
-        string inputFileName)
-    {
-      using var input = File.OpenRead(inputFileName);
-      using var keyIn = new MemoryStream(Encoding.UTF8.GetBytes(FluxPublicKey));
+        public static bool VerifySignature(
+            string fileName,
+            string inputFileName)
+        {
+            using var input = File.OpenRead(inputFileName);
+            using var keyIn = new MemoryStream(Encoding.UTF8.GetBytes(FluxPublicKey));
 
-      return VerifySignature(fileName, input, keyIn);
+            return VerifySignature(fileName, input, keyIn);
+        }
+
+        public static bool VerifySignature(
+            string fileName,
+            Stream inputStream,
+            Stream keyIn)
+        {
+            inputStream = PgpUtilities.GetDecoderStream(inputStream);
+
+            var pgpFact = new PgpObjectFactory(inputStream);
+            PgpSignatureList p3 = null;
+            var o = pgpFact.NextPgpObject();
+            if (o is PgpCompressedData)
+            {
+                var c1 = (PgpCompressedData)o;
+                pgpFact = new PgpObjectFactory(c1.GetDataStream());
+
+                p3 = (PgpSignatureList)pgpFact.NextPgpObject();
+            }
+            else
+            {
+                p3 = (PgpSignatureList)o;
+            }
+
+            var pgpPubRingCollection = new PgpPublicKeyRingBundle(
+                PgpUtilities.GetDecoderStream(keyIn));
+            Stream dIn = File.OpenRead(fileName);
+            var sig = p3[0];
+            var key = pgpPubRingCollection.GetPublicKey(sig.KeyId);
+            sig.InitVerify(key);
+
+            int ch;
+            while ((ch = dIn.ReadByte()) >= 0) sig.Update((byte)ch);
+
+            dIn.Close();
+
+            return sig.Verify();
+        }
     }
-
-    public static bool VerifySignature(
-        string fileName,
-        Stream inputStream,
-        Stream keyIn)
-    {
-      inputStream = PgpUtilities.GetDecoderStream(inputStream);
-
-      PgpObjectFactory pgpFact = new PgpObjectFactory(inputStream);
-      PgpSignatureList p3 = null;
-      PgpObject o = pgpFact.NextPgpObject();
-      if (o is PgpCompressedData)
-      {
-        PgpCompressedData c1 = (PgpCompressedData)o;
-        pgpFact = new PgpObjectFactory(c1.GetDataStream());
-
-        p3 = (PgpSignatureList)pgpFact.NextPgpObject();
-      }
-      else
-      {
-        p3 = (PgpSignatureList)o;
-      }
-
-      PgpPublicKeyRingBundle pgpPubRingCollection = new PgpPublicKeyRingBundle(
-          PgpUtilities.GetDecoderStream(keyIn));
-      Stream dIn = File.OpenRead(fileName);
-      PgpSignature sig = p3[0];
-      PgpPublicKey key = pgpPubRingCollection.GetPublicKey(sig.KeyId);
-      sig.InitVerify(key);
-
-      int ch;
-      while ((ch = dIn.ReadByte()) >= 0)
-      {
-        sig.Update((byte)ch);
-      }
-
-      dIn.Close();
-
-      return sig.Verify();
-
-    }
-  }
 }

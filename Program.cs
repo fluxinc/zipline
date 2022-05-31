@@ -16,7 +16,7 @@ namespace DICOMCapacitorWarden
   internal static class Program
   {
     private const string ServiceName = "DicomCapacitorWarden";
-    public static bool Quitting;
+    private static bool Quitting;
 
     static void Main(string[] args)
     {
@@ -45,9 +45,9 @@ namespace DICOMCapacitorWarden
       SetupLog4Net();
 
       // Ensure the cwd is set properly.
-      FileInfo file = new FileInfo(Assembly.GetExecutingAssembly().Location);
-      string cwd = file.DirectoryName;
-      Directory.SetCurrentDirectory(cwd);
+      var file = new FileInfo(Assembly.GetExecutingAssembly().Location);
+      var cwd = file.DirectoryName;
+      Directory.SetCurrentDirectory(cwd ?? string.Empty);
 
       var service = new WindowsService();
 
@@ -75,7 +75,7 @@ namespace DICOMCapacitorWarden
       ((log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository()).RaiseConfigurationChanged(EventArgs.Empty);
     }
 
-    private static void InstallService(string[] args)
+    private static void InstallService(IEnumerable<string> args)
     {
       var serviceController = ServiceController.GetServices().FirstOrDefault(s => s.ServiceName == ServiceName);
 

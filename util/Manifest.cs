@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DICOMCapacitorWarden.util
 {
-  class Manifest
+  internal class Manifest
   {
     public string Type { get; set; }
     public string Command { get; set; }

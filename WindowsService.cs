@@ -20,11 +20,11 @@ namespace DICOMCapacitorWarden
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
     private static readonly string HashLog = Path.Combine(Globals.LogDirPath, "hash.log");
     private static readonly string ClientLog = Path.Combine(Globals.LogDirPath, "update.log");
-    public static string HashLogText = null;
-    public static int UpdateErrors = 0;
-    private bool QUITTING => false;
+    private static string _hashLogText = null;
+    private static int _updateErrors = 0;
+    private static bool Quitting => false;
 
-    private static List<(string, string, string)> CommandSuffixSubstitution =
+    private static List<(string, string, string)> _commandSuffixSubstitution =
       new List<(string, string, string)>
       {
         // extension | substitution | arguments-to-substitution
@@ -44,7 +44,7 @@ namespace DICOMCapacitorWarden
     internal void TestStartupAndStop(string[] args)
     {
       OnStart(args);
-      while (!QUITTING) { }
+      while (!Quitting) { }
       OnStop();
     }
 
@@ -64,23 +64,24 @@ namespace DICOMCapacitorWarden
 
     private static bool FileVerification(FileInfo file)
     {
-      if (File.Exists($"{file.FullName}.sig"))
+      if (!File.Exists($"{file.FullName}.sig")) return false;
+      
+      var fileInfo = new FileInfo(file.FullName);
+      var signature = new FileInfo($"{file.FullName}.sig");
+      Logger.Info($"Verifying {file.FullName} against signature {signature.FullName}");
+
+      // In this method we can just sign .zips using pgp.
+      // If the .zip is modified the signature should fail
+      // giving us checksums for free too. 
+
+      if (VerifySignature(fileInfo.FullName, signature.FullName))
       {
-        FileInfo fileInfo = new FileInfo(file.FullName);
-        FileInfo signature = new FileInfo($"{file.FullName}.sig");
-        Logger.Info($"Verifying {file.FullName} against signature {signature.FullName}");
-
-        // In this method we can just sign .zips using pgp.
-        // If the .zip is modified the signature should fail
-        // giving us checksums for free too. 
-
-        if (VerifySignature(fileInfo.FullName, signature.FullName))
-        {
-          Logger.Info($"{file.FullName}: verified");
-          return true;
-        }
-        Logger.Info($"{file.FullName}: failed to verify");
+        Logger.Info($"{file.FullName}: verified");
+        return true;
       }
+      
+      Logger.Info($"{file.FullName}: failed to verify");
+      
       return false;
     }
 
@@ -112,10 +113,10 @@ namespace DICOMCapacitorWarden
 
     private (string, string, bool) SubstituteCommand(string command)
     {
-      foreach (var item in CommandSuffixSubstitution)
+      foreach (var item in _commandSuffixSubstitution)
       {
         var pattern = "^.+." + item.Item1 + "$";
-        Regex regex = new Regex(pattern);
+        var regex = new Regex(pattern);
         var result = regex.Match(command);
 
         if (result.Success)
@@ -165,8 +166,8 @@ namespace DICOMCapacitorWarden
 
       var output = proc.StandardOutput.ReadToEnd();
       var errorOutput = proc.StandardError.ReadToEnd();
-      if (!String.IsNullOrEmpty(output)) Logger.Info(output);
-      if (!String.IsNullOrEmpty(errorOutput)) Logger.Info(output);
+      if (!string.IsNullOrEmpty(output)) Logger.Info(output);
+      if (!string.IsNullOrEmpty(errorOutput)) Logger.Info(output);
 
       if (proc.ExitCode != 0)
       {
@@ -190,16 +191,9 @@ namespace DICOMCapacitorWarden
           .Build();
 
         var manifestEnumerator =
-          YamlSerializerExtensions.DeserializeMany<Manifest>(deserializer, manifestReader);
+          deserializer.DeserializeMany<Manifest>(manifestReader);
 
-        List<Manifest> manifests = new List<Manifest>();
-
-        foreach (var manifest in manifestEnumerator)
-        {
-          manifests.Add(manifest);
-        }
-
-        return manifests;
+        return manifestEnumerator.ToList();
       }
       catch (Exception ex)
       {
@@ -216,19 +210,19 @@ namespace DICOMCapacitorWarden
     private void LogHashCode(string hashcode)
     {
       File.AppendAllText(HashLog, hashcode + Environment.NewLine);
-      HashLogText = null;
+      _hashLogText = null;
     }
 
     private bool UpdateAlreadyProcessed(string hashCode)
     {
       if (!File.Exists(HashLog)) File.Create(HashLog);
 
-      if (HashLogText is null) HashLogText = File.ReadAllText(HashLog);
+      _hashLogText ??= File.ReadAllText(HashLog);
 
-      return HashLogText.Contains(hashCode + Environment.NewLine);
+      return _hashLogText.Contains(hashCode + Environment.NewLine);
     }
 
-    private void CleanupExtractedFiles(FileInfo updateFile)
+    private static void CleanupExtractedFiles(FileSystemInfo updateFile)
     {
       DirectoryInfo extractUpdateFolder =
         Directory.CreateDirectory(
@@ -240,15 +234,15 @@ namespace DICOMCapacitorWarden
 
     private DirectoryInfo GenerateReturnDirectory(FileInfo file)
     {
-      return Directory.CreateDirectory(Path.Combine(file.DirectoryName,
+      return Directory.CreateDirectory(Path.Combine(file.DirectoryName ?? throw new InvalidOperationException(),
         "log-" + Path.GetFileNameWithoutExtension(file.FullName)));
     }
 
     private void ReturnLogFile(FileInfo file)
     {
-      FileInfo log = new FileInfo(ClientLog);
+      var log = new FileInfo(ClientLog);
 
-      DirectoryInfo returnDir = GenerateReturnDirectory(file);
+      var returnDir = GenerateReturnDirectory(file);
 
       log.CopyTo(returnDir.FullName + $"\\{log.Name}", true);
 
@@ -262,7 +256,7 @@ namespace DICOMCapacitorWarden
 
     private void FlushClientLog()
     {
-      FileInfo log = new FileInfo(ClientLog);
+      var log = new FileInfo(ClientLog);
       File.Delete(log.FullName);
       File.WriteAllText(log.FullName, "");
     }
@@ -271,18 +265,18 @@ namespace DICOMCapacitorWarden
     {
       ExtractFile(updateZipFile, Path.GetTempPath());
 
-      DirectoryInfo extractUpdateFolder =
+      var extractUpdateFolder =
         Directory.CreateDirectory(
           Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(updateZipFile.FullName)));
 
       var payloadZipFile = extractUpdateFolder.GetFiles("payload.zip")[0];
 
-      if (FileVerification(payloadZipFile))
-      {
-        ExtractFile(payloadZipFile, extractUpdateFolder.FullName);
-        return Directory.CreateDirectory(Path.Combine(extractUpdateFolder.FullName, "payload"));
-      }
-      throw new Exception("Bad payload signature or missing payload.");
+      if (!FileVerification(payloadZipFile)) 
+        throw new Exception("Bad payload signature or missing payload.");
+      
+      ExtractFile(payloadZipFile, extractUpdateFolder.FullName);
+      
+      return Directory.CreateDirectory(Path.Combine(extractUpdateFolder.FullName, "payload"));
     }
 
     private void ProcessManifest(FileInfo updateZipFile)
@@ -306,20 +300,16 @@ namespace DICOMCapacitorWarden
         }
         catch (Exception ex)
         {
-          if (manifest.OnError == "ignore")
-          {
-            Logger.Error(ex);
-            Logger.Info($"Ignoring error for {manifest.Command}");
-            UpdateErrors++;
-            continue;
-          }
-
-          throw ex;
+          if (manifest.OnError != "ignore") throw ex;
+          
+          Logger.Error(ex);
+          Logger.Info($"Ignoring error for {manifest.Command}");
+          _updateErrors++;
         }
       }
 
-      LoggerWithRobot($"Warden update completed with {UpdateErrors} error(s).");
-      UpdateErrors = 0;
+      LoggerWithRobot($"Warden update completed with {_updateErrors} error(s).");
+      _updateErrors = 0;
       ReturnLogFile(updateZipFile);
       CleanupExtractedFiles(updateZipFile);
       LogHashCode(StripHashCode(updateZipFile.Name));
@@ -328,43 +318,40 @@ namespace DICOMCapacitorWarden
     private void OnUsbDriveMounted(string path)
     {
       Logger.Info($"{path} was mounted.  Searching for Warden files...");
-      DirectoryInfo dir = Directory.CreateDirectory(path);
+      var dir = Directory.CreateDirectory(path);
 
-      if (dir.Exists)
+      if (!dir.Exists) return;
+      
+      var files = dir.GetFiles("WARDEN*.zip");
+
+      foreach (var updateZipFile in files)
       {
-        var files = dir.GetFiles("WARDEN*.zip");
+        FlushClientLog();
 
-        foreach (var updateZipFile in files)
+        if (UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
         {
-          FlushClientLog();
+          Logger.Info($"{updateZipFile} has already been processed.");
+          ReturnLogFile(updateZipFile);
+          continue;
+        }
 
-          if (UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
-          {
-            Logger.Info($"{updateZipFile} has already been processed.");
-            ReturnLogFile(updateZipFile);
-            continue;
-          }
+        LoggerWithRobot("Beginning Warden Update");
 
-          LoggerWithRobot("Beginning Warden Update");
-
-          try
-          {
-            ProcessManifest(updateZipFile);
-          }
-          catch (Exception ex)
-          {
-            Logger.Info($"Error processing manifest: {ex}");
-            LoggerWithRobot("Warden update failed");
-            ReturnLogFile(updateZipFile);
-            CleanupExtractedFiles(updateZipFile);
-            continue;
-          }
+        try
+        {
+          ProcessManifest(updateZipFile);
+        }
+        catch (Exception ex)
+        {
+          Logger.Info($"Error processing manifest: {ex}");
+          LoggerWithRobot("Warden update failed");
+          ReturnLogFile(updateZipFile);
+          CleanupExtractedFiles(updateZipFile);
         }
       }
-      return;
     }
 
-    private void OnUsbDriveEjected(string path)
+    private static void OnUsbDriveEjected(string path)
     {
       Logger.Info($"{path} was ejected.");
     }
