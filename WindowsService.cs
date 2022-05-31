@@ -8,7 +8,8 @@ namespace DICOMCapacitorWarden
   public partial class WindowsService : ServiceBase
   {
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
-    private bool QUITTING => false;
+
+    private static bool Quitting => false;
 
     public WindowsService()
     {
@@ -18,7 +19,7 @@ namespace DICOMCapacitorWarden
     internal void TestStartupAndStop(string[] args)
     {
       OnStart(args);
-      while (!QUITTING) { }
+      while (!Quitting) { }
       OnStop();
     }
 
@@ -39,7 +40,7 @@ namespace DICOMCapacitorWarden
     private void OnUsbDriveMounted(string path)
     {
       Logger.Info($"{path} was mounted.  Searching for Warden files...");
-      DirectoryInfo dir = Directory.CreateDirectory(path);
+      var dir = Directory.CreateDirectory(path);
 
       if (!dir.Exists) return;
 
@@ -51,7 +52,7 @@ namespace DICOMCapacitorWarden
       }
     }
 
-    private void OnUsbDriveEjected(string path)
+    private static void OnUsbDriveEjected(string path)
     {
       Logger.Info($"{path} was ejected.");
     }

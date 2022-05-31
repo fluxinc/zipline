@@ -4,11 +4,10 @@ using System.Text;
 
 namespace DICOMCapacitorWarden.util
 {
-  class VerifyDetachedSignature
+  internal static class VerifyDetachedSignature
   {
-
     private static readonly string FluxPublicKey =
-@"-----BEGIN PGP PUBLIC KEY BLOCK-----
+        @"-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQGNBGJduSYBDAD9NiWwAHfNQkTy4YKc9M8ZIdPpbeyjl2A1GSoIzZ64wWnZNYct
 rbKgDaLi2iwA+ZmFZ4cCH2si6B6BZvj6/mEOs8bOUll+PzX7Hwf+j+MahNZnqFm/
@@ -70,12 +69,12 @@ ZQ==
     {
       inputStream = PgpUtilities.GetDecoderStream(inputStream);
 
-      PgpObjectFactory pgpFact = new PgpObjectFactory(inputStream);
+      var pgpFact = new PgpObjectFactory(inputStream);
       PgpSignatureList p3 = null;
-      PgpObject o = pgpFact.NextPgpObject();
+      var o = pgpFact.NextPgpObject();
       if (o is PgpCompressedData)
       {
-        PgpCompressedData c1 = (PgpCompressedData)o;
+        var c1 = (PgpCompressedData)o;
         pgpFact = new PgpObjectFactory(c1.GetDataStream());
 
         p3 = (PgpSignatureList)pgpFact.NextPgpObject();
@@ -85,23 +84,19 @@ ZQ==
         p3 = (PgpSignatureList)o;
       }
 
-      PgpPublicKeyRingBundle pgpPubRingCollection = new PgpPublicKeyRingBundle(
+      var pgpPubRingCollection = new PgpPublicKeyRingBundle(
           PgpUtilities.GetDecoderStream(keyIn));
       Stream dIn = File.OpenRead(fileName);
-      PgpSignature sig = p3[0];
-      PgpPublicKey key = pgpPubRingCollection.GetPublicKey(sig.KeyId);
+      var sig = p3[0];
+      var key = pgpPubRingCollection.GetPublicKey(sig.KeyId);
       sig.InitVerify(key);
 
       int ch;
-      while ((ch = dIn.ReadByte()) >= 0)
-      {
-        sig.Update((byte)ch);
-      }
+      while ((ch = dIn.ReadByte()) >= 0) sig.Update((byte)ch);
 
       dIn.Close();
 
       return sig.Verify();
-
     }
   }
 }
