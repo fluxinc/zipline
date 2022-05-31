@@ -55,7 +55,6 @@ namespace DICOMCapacitorWarden
 
       usbEventWatcher.UsbDriveEjected += (_, path) => OnUsbDriveEjected(path);
       usbEventWatcher.UsbDriveMounted += (_, path) => OnUsbDriveMounted(path);
-
     }
 
     protected override void OnStop()
@@ -108,7 +107,6 @@ namespace DICOMCapacitorWarden
 #if RELEASE
       synth.Speak(strung);
 #endif
-
     }
 
     private (string, string, bool) SubstituteCommand(string command)
@@ -329,9 +327,6 @@ namespace DICOMCapacitorWarden
       LogHashCode(StripHashCode(updateZipFile.Name));
     }
 
-
-
-
     private void OnUsbDriveMounted(string path)
     {
       Logger.Info($"{path} was mounted.  Searching for Warden files...");
@@ -369,7 +364,6 @@ namespace DICOMCapacitorWarden
       }
       return;
     }
-
 
     private void OnUsbDriveEjected(string path)
     {
