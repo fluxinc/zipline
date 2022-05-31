@@ -1,0 +1,19 @@
+{
+  "name": "dicom-capacitor-warden",
+  "version": "1.0.0",
+  "description": "Manages dicom-capacitor configurations and service states.",
+  "main": "DICOMCapacitorWarden.sln",
+  "repository": "git@github.com:fluxinc/dicom-capacitor-warden.git",
+  "authors": [
+    {
+      "name": "Wojtek Grabski",
+      "email": "wojtek@fluxinc.co"
+    }, 
+    {
+      "name": "Jack Lucas",
+      "email": "jack.lucas@fluxinc.co"
+    }
+  ], 
+  "license": "UNLICENSED",
+  "private": true
+}
