@@ -2,7 +2,7 @@
 using System.IO;
 using System.Reflection;
 
-namespace DICOMCapacitorWarden.util
+namespace DICOMCapacitorWarden.Utility
 {
   public static class Globals
   {

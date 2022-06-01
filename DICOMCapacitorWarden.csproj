@@ -107,10 +107,10 @@
     <Compile Include="ProjectInstaller.Designer.cs">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
-    <Compile Include="util\YamlSerializerExtensions.cs" />
-    <Compile Include="util\Globals.cs" />
-    <Compile Include="util\Manifest.cs" />
-    <Compile Include="util\VerifyDetachedSignature.cs" />
+    <Compile Include="Utility\YamlSerializerExtensions.cs" />
+    <Compile Include="Utility\Globals.cs" />
+    <Compile Include="Utility\Manifest.cs" />
+    <Compile Include="Utility\VerifyDetachedSignature.cs" />
     <Compile Include="WindowsService.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -1,4 +1,4 @@
-﻿using DICOMCapacitorWarden.util;
+﻿using DICOMCapacitorWarden.Utility;
 using log4net;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using static DICOMCapacitorWarden.util.VerifyDetachedSignature;
+using static DICOMCapacitorWarden.Utility.VerifyDetachedSignature;
 
 namespace DICOMCapacitorWarden
 {

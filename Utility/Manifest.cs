@@ -1,4 +1,4 @@
-﻿namespace DICOMCapacitorWarden.util
+﻿namespace DICOMCapacitorWarden.Utility
 {
   internal class Manifest
   {
