@@ -13,13 +13,21 @@ using static DICOMCapacitorWarden.Utility.VerifyDetachedSignature;
 
 namespace DICOMCapacitorWarden
 {
-  class WardenPackage
+  public class WardenPackage
   {
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
     private static readonly string HashLog = Path.Combine(Globals.LogDirPath, "hash.log");
     private static readonly string ClientLog = Path.Combine(Globals.LogDirPath, "update.log");
+
+    public bool IgnoreHashLog { get; set; }
+    private string TempPath => Path.GetTempPath();
+    private List<Manifest> manifests { get; set; }
+    private FileInfo updateZipFile { get; set; }
+    private DirectoryInfo payloadDirectory { get; set; }
+    private DirectoryInfo extractUpdateFolder { get; set; }
+
     public static string HashLogText = null;
-    public static int UpdateErrors = 0;
+    public int UpdateErrors = 0;
 
     private static List<(string, string, string)> CommandSuffixSubstitution =
       new List<(string, string, string)>
@@ -32,30 +40,32 @@ namespace DICOMCapacitorWarden
 #if RELEASE
     private SpeechSynthesizer synth => new SpeechSynthesizer();
 #endif
-    private static bool FileVerification(FileInfo file)
+
+    public WardenPackage(FileInfo updatePath)
     {
-      if (!File.Exists($"{file.FullName}.sig")) return false;
+      updateZipFile = updatePath;
 
-      FileInfo fileInfo = new FileInfo(file.FullName);
-      FileInfo signature = new FileInfo($"{file.FullName}.sig");
-      Logger.Info($"Verifying {file.FullName} against signature {signature.FullName}");
+      extractUpdateFolder = Directory.CreateDirectory(
+        Path.Combine(TempPath, Path.GetFileNameWithoutExtension(updateZipFile.FullName)));
 
-      // In this method we can just sign .zips using pgp.
-      // If the .zip is modified the signature should fail
-      // giving us checksums for free too. 
+      payloadDirectory = Directory.CreateDirectory(
+        Path.Combine(extractUpdateFolder.FullName, "payload"));
 
-      if (!VerifySignature(fileInfo.FullName, signature.FullName)) return false;
-
-      return true;
+      manifests = new List<Manifest>();
     }
 
-    private static string ExtractFile(FileInfo file, string extractDir)
+    private static void ExtractFile(FileInfo file, string extractDirectory)
     {
-      Logger.Info($"Extracting {file.FullName} to {extractDir}");
+      Logger.Info($"Extracting {file.FullName} to {extractDirectory}");
 
       try
       {
-        ZipFile.ExtractToDirectory(file.FullName, extractDir);
+        var extractUpdateFolder = Path.Combine(
+          extractDirectory, Path.GetFileNameWithoutExtension(file.FullName));
+
+        if (Directory.Exists(extractUpdateFolder))
+          Directory.Delete(extractUpdateFolder, true);
+        ZipFile.ExtractToDirectory(file.FullName, extractDirectory);
       }
       catch (Exception ex)
       {
@@ -63,7 +73,6 @@ namespace DICOMCapacitorWarden
       }
 
       Logger.Info($"{file.FullName} extracted successfully.");
-      return extractDir;
     }
 
     private static void LoggerWithRobot(string strung)
@@ -135,13 +144,13 @@ namespace DICOMCapacitorWarden
       Logger.Info($"{manifest.Command} finished.");
     }
 
-    private static List<Manifest> OpenManifest(DirectoryInfo directory)
+    private void OpenManifest()
     {
       Logger.Info("Opening manifest...");
 
       try
       {
-        var manifestFile = directory.GetFiles("manifest.yml")[0];
+        var manifestFile = payloadDirectory.GetFiles("manifest.yml")[0];
 
         using var manifestReader = new StreamReader(manifestFile.FullName);
 
@@ -152,11 +161,8 @@ namespace DICOMCapacitorWarden
         var manifestEnumerator =
           YamlSerializerExtensions.DeserializeMany<Manifest>(deserializer, manifestReader);
 
-        List<Manifest> manifests = new List<Manifest>();
-
         foreach (var manifest in manifestEnumerator) manifests.Add(manifest);
 
-        return manifests;
       }
       catch (Exception ex)
       {
@@ -185,13 +191,8 @@ namespace DICOMCapacitorWarden
       return HashLogText.Contains(hashCode + Environment.NewLine);
     }
 
-    private static void CleanupExtractedFiles(FileInfo updateFile)
+    private void CleanupExtractedFiles(FileInfo updateFile)
     {
-      DirectoryInfo extractUpdateFolder =
-        Directory.CreateDirectory(
-          Path.Combine(Path.GetTempPath(),
-          Path.GetFileNameWithoutExtension(updateFile.FullName)));
-
       extractUpdateFolder.Delete(true);
     }
 
@@ -224,27 +225,18 @@ namespace DICOMCapacitorWarden
       File.WriteAllText(log.FullName, "");
     }
 
-    private static DirectoryInfo GetPayloadDirectory(FileInfo updateZipFile)
+    private void ExtractPayload()
     {
-      ExtractFile(updateZipFile, Path.GetTempPath());
-
-      DirectoryInfo extractUpdateFolder =
-        Directory.CreateDirectory(
-          Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(updateZipFile.FullName)));
-
+      ExtractFile(updateZipFile, TempPath);
       var payloadZipFile = extractUpdateFolder.GetFiles("payload.zip")[0];
 
-      if (!FileVerification(payloadZipFile)) throw new Exception("Bad payload signature or missing payload.");
+      if (!VerifyFile(payloadZipFile)) throw new Exception("Bad payload signature or missing payload.");
 
       ExtractFile(payloadZipFile, extractUpdateFolder.FullName);
-      return Directory.CreateDirectory(Path.Combine(extractUpdateFolder.FullName, "payload"));
     }
 
-    private static void ProcessManifest(FileInfo updateZipFile)
+    private void ProcessManifest()
     {
-      var payloadDir = GetPayloadDirectory(updateZipFile);
-      var manifests = OpenManifest(payloadDir);
-
       foreach (var manifest in manifests)
       {
         try
@@ -252,7 +244,7 @@ namespace DICOMCapacitorWarden
           switch (manifest.Type.ToLower())
           {
             case "run":
-              ExecuteCommand(manifest, payloadDir);
+              ExecuteCommand(manifest, payloadDirectory);
               break;
             default:
               Logger.Info($"Type {manifest.Type} unimplemented.");
@@ -269,39 +261,63 @@ namespace DICOMCapacitorWarden
           continue;
         }
       }
-
-      LoggerWithRobot($"Warden update completed with {UpdateErrors} error(s).");
-      ReturnLogFile(updateZipFile);
-      CleanupExtractedFiles(updateZipFile);
-      LogHashCode(StripHashCode(updateZipFile.Name));
+      FinalizeUpdate(true);
     }
 
-    public static void ProcessUpdate(FileInfo updateZipFile)
+    private void FinalizeUpdate(bool status)
+    {
+      var logMessage = (status) ? "completed" : "failed";
+
+      LoggerWithRobot($"Warden update {logMessage} with {UpdateErrors} error(s).");
+      ReturnLogFile(updateZipFile);
+      CleanupExtractedFiles(updateZipFile);
+
+      if (!IgnoreHashLog && status) LogHashCode(StripHashCode(updateZipFile.Name));
+      return;
+    }
+
+    public bool PrepareUpdate()
     {
       FlushClientLog();
-      UpdateErrors = 0;
 
-      if (UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
+      if (!IgnoreHashLog && UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
       {
         Logger.Info($"{updateZipFile} has already been processed.");
         ReturnLogFile(updateZipFile);
-        return;
+        return false;
+      }
+      try
+      {
+        ExtractPayload();
+      }
+      catch (Exception ex)
+      {
+        Logger.Error(ex);
+        UpdateErrors++;
+        FinalizeUpdate(false);
+        return false;
       }
 
+      return true;
+    }
+
+    public bool ProcessUpdate()
+    {
       LoggerWithRobot("Beginning Warden Update");
 
       try
       {
-        ProcessManifest(updateZipFile);
+        OpenManifest();
+        ProcessManifest();
       }
       catch (Exception ex)
       {
-        Logger.Info($"Error processing manifest: {ex}");
-        LoggerWithRobot("Warden update failed");
-        ReturnLogFile(updateZipFile);
-        CleanupExtractedFiles(updateZipFile);
-        return;
+        Logger.Error($"Error processing manifest: {ex}");
+        UpdateErrors++;
+        FinalizeUpdate(false);
+        return false;
       }
+      return true;
     }
   }
 }

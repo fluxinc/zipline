@@ -1,4 +1,5 @@
-﻿using Org.BouncyCastle.Bcpg.OpenPgp;
+﻿using log4net;
+using Org.BouncyCastle.Bcpg.OpenPgp;
 using System.IO;
 using System.Text;
 
@@ -6,6 +7,8 @@ namespace DICOMCapacitorWarden.Utility
 {
   internal static class VerifyDetachedSignature
   {
+    private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
+
     private static readonly string FluxPublicKey =
         @"-----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -51,6 +54,24 @@ ZQ==
 
     // If we want to use detached signatures. Modified for our use.
     // https://github.com/bcgit/bc-csharp/blob/master/crypto/test/src/openpgp/examples/DetachedSignatureProcessor.cs
+
+    public static bool VerifyFile(FileInfo file)
+    {
+      if (!File.Exists($"{file.FullName}.sig")) return false;
+
+      FileInfo fileInfo = new FileInfo(file.FullName);
+      FileInfo signature = new FileInfo($"{file.FullName}.sig");
+
+      // In this method we can just sign .zips using pgp.
+      // If the .zip is modified the signature should fail
+      // giving us checksums for free too. 
+
+      Logger.Info($"Verifying {file.FullName} against signature {signature.FullName}");
+
+      if (!VerifySignature(fileInfo.FullName, signature.FullName)) return false;
+
+      return true;
+    }
 
     public static bool VerifySignature(
         string fileName,

@@ -47,7 +47,8 @@ namespace DICOMCapacitorWarden
 
       foreach (var updateZipFile in files)
       {
-        WardenPackage.ProcessUpdate(updateZipFile);
+        var wardenPackage = new WardenPackage(updateZipFile);
+        if (wardenPackage.PrepareUpdate()) wardenPackage.ProcessUpdate();
       }
     }
 

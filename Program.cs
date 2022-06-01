@@ -91,7 +91,6 @@ namespace DICOMCapacitorWarden
       var state = new System.Collections.Specialized.ListDictionary();
       projectInstaller.Install(state);
 
-      //      ManagedInstallerClass.InstallHelper(new[] { assemblyLocation });
       Quitting = true;
     }
 
