@@ -34,7 +34,7 @@ namespace DICOMCapacitorWarden
       new List<(string, string, string)>
       {
         // extension | substitution | arguments-to-substitution
-        ("bat", "cmd.exe", "/c" ),
+        ("bat", "cmd.exe", "/c .\\" ),
         ("ps1", "cmd.exe", "/c powershell.exe -Command .\\")
       };
 
@@ -269,7 +269,7 @@ namespace DICOMCapacitorWarden
     {
       var logMessage = (status) ? "completed" : "failed";
 
-      LoggerWithRobot($"Warden update {logMessage} with {UpdateErrors} error(s).");
+      LoggerWithRobot($"Warden update {logMessage} with {UpdateErrors} errors.");
       ReturnLogFile(updateZipFile);
       CleanupExtractedFiles(updateZipFile);
 
@@ -283,7 +283,7 @@ namespace DICOMCapacitorWarden
 
       if (!IgnoreHashLog && UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
       {
-        Logger.Info($"{updateZipFile} has already been processed.");
+        LoggerWithRobot($"{updateZipFile} has already been processed.");
         ReturnLogFile(updateZipFile);
         return false;
       }
