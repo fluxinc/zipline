@@ -1,6 +1,6 @@
 ---
 type: run
-command: .\script1.bat
+command: script1.bat
 arguments: '-path "%ProgramData%\\Flux Inc\\DICOM Capacitor"'
 ---
 type: run

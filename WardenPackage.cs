@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -34,7 +35,7 @@ namespace DICOMCapacitorWarden
       {
         // extension | substitution | arguments-to-substitution
         ("bat", "cmd.exe", "/c" ),
-        ("ps1", "powershell.exe", "-File")
+        ("ps1", "cmd.exe", "/c powershell.exe -Command .\\")
       };
 
 #if RELEASE
@@ -75,7 +76,7 @@ namespace DICOMCapacitorWarden
       Logger.Info($"{file.FullName} extracted successfully.");
     }
 
-    private static void LoggerWithRobot(string strung)
+    private void LoggerWithRobot(string strung)
     {
       Logger.Info(strung);
 
@@ -119,8 +120,8 @@ namespace DICOMCapacitorWarden
         : soleCommand.Item1;
 
       proc.StartInfo.Arguments = (!string.IsNullOrEmpty(manifest.Arguments))
-        ? soleCommand.Item2 + " " + additionalArguments + " " + manifest.Arguments
-        : soleCommand.Item2 + " " + additionalArguments;
+        ? soleCommand.Item2 + additionalArguments + " " + manifest.Arguments
+        : soleCommand.Item2 + additionalArguments;
 
       proc.StartInfo.Arguments =
         Environment.ExpandEnvironmentVariables(proc.StartInfo.Arguments);
