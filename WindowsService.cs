@@ -43,7 +43,7 @@ namespace DICOMCapacitorWarden
 
       if (!dir.Exists) return;
 
-      var files = dir.GetFiles("WARDEN*.zip");
+      var files = dir.GetFiles("warden*.zip");
 
       foreach (var updateZipFile in files)
       {

@@ -172,7 +172,7 @@ namespace DICOMCapacitorWarden
 
     private static string StripHashCode(string filename)
     {
-      var match = Regex.Match(filename, "^WARDEN-(.*).zip");
+      var match = Regex.Match(filename, "^warden-(.*).zip");
       return match.Groups[1].Value;
     }
 

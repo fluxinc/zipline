@@ -4,12 +4,12 @@ namespace DICOMCapacitorWardenTests
 {
   public class WardenManifestTests
   {
-    private string examples = "../../../../examples/";
+    private string examples = "../../../../examples/warden-";
 
     [Fact]
     public void FailsOnMissingManifest()
     {
-      var warden = new WardenPackage(new FileInfo($"{examples}WARDEN-e1.zip"));
+      var warden = new WardenPackage(new FileInfo($"{examples}e1.zip"));
       Assert.True(warden.PrepareUpdate());
       Assert.False(warden.ProcessUpdate());
     }
@@ -17,7 +17,7 @@ namespace DICOMCapacitorWardenTests
     [Fact]
     public void FailsWithInvalidSignature()
     {
-      var warden = new WardenPackage(new FileInfo($"{examples}WARDEN-e0.zip"));
+      var warden = new WardenPackage(new FileInfo($"{examples}e0.zip"));
       Assert.True(warden.PrepareUpdate());
       Assert.False(warden.ProcessUpdate());
     }
@@ -25,7 +25,7 @@ namespace DICOMCapacitorWardenTests
     [Fact]
     public void RunsBasicManifest()
     {
-      var warden = new WardenPackage(new FileInfo($"{examples}WARDEN-0x5.zip"));
+      var warden = new WardenPackage(new FileInfo($"{examples}0x5.zip"));
       warden.IgnoreHashLog = true;
       Assert.True(warden.PrepareUpdate());
       Assert.True(warden.ProcessUpdate());
@@ -34,7 +34,7 @@ namespace DICOMCapacitorWardenTests
     [Fact]
     public void ContinuesOnErrorIgnore()
     {
-      var warden = new WardenPackage(new FileInfo($"{examples}WARDEN-0xDEADBEEF.zip"));
+      var warden = new WardenPackage(new FileInfo($"{examples}0xdeadbeef.zip"));
       warden.IgnoreHashLog = true;
       Assert.True(warden.PrepareUpdate());
       Assert.True(warden.ProcessUpdate());
