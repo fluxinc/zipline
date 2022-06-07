@@ -319,5 +319,11 @@ namespace DICOMCapacitorWarden
       }
       return true;
     }
+
+    public bool Update()
+    {
+      if (PrepareUpdate()) return ProcessUpdate();
+      return false;
+    }
   }
 }

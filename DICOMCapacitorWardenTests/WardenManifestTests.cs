@@ -10,7 +10,8 @@ namespace DICOMCapacitorWardenTests
     public void FailsOnMissingManifest()
     {
       var warden = new WardenPackage(new FileInfo($"{examples}WARDEN-e1.zip"));
-      Assert.False(warden.PrepareUpdate());
+      Assert.True(warden.PrepareUpdate());
+      Assert.False(warden.ProcessUpdate());
     }
 
     [Fact]
