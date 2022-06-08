@@ -283,7 +283,6 @@ namespace DICOMCapacitorWarden
 
       if (!IgnoreHashLog && UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
       {
-        LoggerWithRobot($"{updateZipFile} has already been processed.");
         ReturnLogFile(updateZipFile);
         return false;
       }

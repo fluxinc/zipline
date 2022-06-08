@@ -1,6 +1,7 @@
 ﻿using log4net;
 using System.IO;
 using System.ServiceProcess;
+using System.Speech.Synthesis;
 using Usb.Events;
 
 namespace DICOMCapacitorWarden
@@ -9,6 +10,11 @@ namespace DICOMCapacitorWarden
   {
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
     private static bool Quitting => false;
+    private static bool Finished;
+
+#if RELEASE
+    private SpeechSynthesizer synth => new SpeechSynthesizer();
+#endif
 
     public WindowsService()
     {
@@ -44,17 +50,30 @@ namespace DICOMCapacitorWarden
       if (!dir.Exists) return;
 
       var files = dir.GetFiles("warden*.zip");
+      if (files.Length > 0) { Finished = true; }
 
       foreach (var updateZipFile in files)
       {
         var wardenPackage = new WardenPackage(updateZipFile);
         wardenPackage.Update();
       }
+
+      if (Finished) LoggerWithRobot("All updates complete. You may now remove the drive.");
+      Finished = false;
     }
 
     private static void OnUsbDriveEjected(string path)
     {
       Logger.Info($"{path} was ejected.");
+    }
+
+    private void LoggerWithRobot(string strung)
+    {
+      Logger.Info(strung);
+
+#if RELEASE
+      synth.Speak(strung);
+#endif
     }
   }
 }
