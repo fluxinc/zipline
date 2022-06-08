@@ -5,46 +5,43 @@
 (define payload-dir
   (get-directory "Select payload directory."))
 
+(define temp-dir (make-temporary-directory "~a"))
+
 (define (create-payload)
   (current-directory payload-dir)
-  (when (file-exists? "../payload.zip")
-    (delete-file "../payload.zip"))
-  
-  (when (not (directory-exists? "../payload"))
-    (make-directory "../payload"))
+
+  (make-directory (build-path temp-dir "payload"))
   
   (map (lambda (f)
-         (display (string-append "../payload/" (path->string f) "\n"))
-         (copy-directory/files f (string-append "../payload/" (path->string f))))
+         (display (string-append (path->string f) "\n"))
+         (copy-directory/files f (build-path temp-dir "payload" (file-name-from-path f))))
        (directory-list))
-  
-  (current-directory "../")
-  (zip "payload.zip" "payload")
-  (delete-directory/files "payload"))
+
+  (current-directory temp-dir)
+  (zip  "payload.zip" "payload"))
+
 
 (define (sign-payload)
-  (when (file-exists? "payload.zip.sig")
-    (delete-file "payload.zip.sig"))
-  (system "gpg --detach-sign --default-key support@fluxinc.ca payload.zip"))
+  (let ((payload-path (build-path temp-dir "payload.zip")))
+  (system (format "gpg --detach-sign --default-key support@fluxinc.ca ~s" (path->string payload-path)))))
 
 (define (create-update-file)
-  (let* ((sha256-hash (call-with-input-file "payload.zip"
+  (let* ((sha256-hash (call-with-input-file (build-path temp-dir "payload.zip")
                         (lambda (in)
                           (bytes->hex-string
                            (sha256-bytes in)))))
          (final-name (string-append "warden-" sha256-hash))
          (zipped-name (string-append final-name ".zip")))
     
-    (when (not (directory-exists? final-name))
-      (make-directory final-name))
-
-    (when (file-exists? zipped-name)
-      (delete-file zipped-name))
-
-    (map (lambda (f) (rename-file-or-directory f (string-append final-name "/" f)))
+    (make-directory (build-path temp-dir final-name))
+    
+    (map (lambda (f) (rename-file-or-directory (build-path temp-dir (file-name-from-path f)) (build-path temp-dir final-name f)))
          '("payload.zip" "payload.zip.sig"))
+    
     (zip zipped-name final-name)
-    (delete-directory/files final-name)))
+
+    (copy-file (build-path temp-dir zipped-name)
+               (build-path payload-dir "../" zipped-name))))
 
 (define (warden-create)
   (display "Creating Payload.zip\n")
@@ -53,6 +50,8 @@
   (sign-payload)
   (display "Creating update file\n")
   (create-update-file)
+  (display "Cleaning up temp files.\n")
+  (delete-directory/files temp-dir)
   (display "Completed. Please any key to quit.")
   (read-line)
   (exit))
