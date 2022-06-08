@@ -9,7 +9,6 @@
 
 (define (create-payload)
   (current-directory payload-dir)
-
   (make-directory (build-path temp-dir "payload"))
   
   (map (lambda (f)
@@ -23,7 +22,7 @@
 
 (define (sign-payload)
   (let ((payload-path (build-path temp-dir "payload.zip")))
-  (system (format "gpg --detach-sign --default-key support@fluxinc.ca ~s" (path->string payload-path)))))
+    (system (format "gpg --detach-sign --default-key support@fluxinc.ca ~s" (path->string payload-path)))))
 
 (define (create-update-file)
   (let* ((sha256-hash (call-with-input-file (build-path temp-dir "payload.zip")
@@ -35,7 +34,8 @@
     
     (make-directory (build-path temp-dir final-name))
     
-    (map (lambda (f) (rename-file-or-directory (build-path temp-dir (file-name-from-path f)) (build-path temp-dir final-name f)))
+    (map (lambda (f) (rename-file-or-directory (build-path temp-dir (file-name-from-path f))
+                                               (build-path temp-dir final-name f)))
          '("payload.zip" "payload.zip.sig"))
     
     (zip zipped-name final-name)
