@@ -35,7 +35,7 @@ namespace DICOMCapacitorWarden
       {
         // extension | substitution | arguments-to-substitution
         ("bat", "cmd.exe", "/c .\\" ),
-        ("ps1", "cmd.exe", "/c powershell.exe -Command .\\")
+        ("ps1", "cmd.exe", "/c powershell.exe -NoProfile -NoLogo -NonInteractive -ExecutionPolicy Bypass -Command .\\")
       };
 
 #if RELEASE
@@ -283,6 +283,7 @@ namespace DICOMCapacitorWarden
 
       if (!IgnoreHashLog && UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
       {
+        Logger.Info($"{updateZipFile.Name} has already been processed.");
         ReturnLogFile(updateZipFile);
         return false;
       }

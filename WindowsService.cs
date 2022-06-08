@@ -9,7 +9,7 @@ namespace DICOMCapacitorWarden
   public partial class WindowsService : ServiceBase
   {
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
-    private static bool Quitting => false;
+
     private static bool Finished;
 
 #if RELEASE
@@ -24,7 +24,7 @@ namespace DICOMCapacitorWarden
     internal void TestStartupAndStop(string[] args)
     {
       OnStart(args);
-      while (!Quitting) { }
+      for(; ;)
       OnStop();
     }
 
@@ -50,6 +50,7 @@ namespace DICOMCapacitorWarden
       if (!dir.Exists) return;
 
       var files = dir.GetFiles("warden*.zip");
+
       if (files.Length > 0) { Finished = true; }
 
       foreach (var updateZipFile in files)
@@ -58,7 +59,7 @@ namespace DICOMCapacitorWarden
         wardenPackage.Update();
       }
 
-      if (Finished) LoggerWithRobot("All updates complete. You may now remove the drive.");
+      if (Finished) LoggerWithRobot("All updates complete. You may now remove the flash drive.");
       Finished = false;
     }
 
