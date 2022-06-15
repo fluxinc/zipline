@@ -1,11 +1,9 @@
-The .zip file is a sample payload.
+sample manifests and payloads
 
-WARDEN-2909e0a4a1955005cbe89b342bfb6cbd90f44ff548a834bff9de827ba9049702.zip -- DicomCapacitorService installer (Inno)
+e0.zip -- missing signature
 
-WARDEN-91d2fb0b6aa6f8342078a7d620a270dcff796c722770cf45fdbf9488f4d8bb9c.zip -- DicomCapacitorService installer (Inno) w/ return Setup.log
+e1.zip -- missing manifest.yml
 
-WARDEN-0xFC0.zip -- FileCopy example
+0xDEADBEEF.zip -- OnError usage with scripts
 
-WARDEN-0xABBA.zip -- Inno Setup Example
-
-log-*: sample log output that will be returned on the flash drive.
+0x5 -- Working example of scripts

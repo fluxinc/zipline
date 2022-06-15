@@ -1,10 +1,11 @@
-# Executable type
-operation: Executable
-executable: setup.exe # Location of exe
-args: args            # Args for exe
-services: services    # Services that need to be stopped for upgrade
-
-# FileCopy,  C:\ included in payload
-operation: FileCopy
-services: services # Services that need to be stopped for upgrade
-
+---
+type: run
+command: script1.bat
+arguments: '-path "%ProgramData%\\Flux Inc\\DICOM Capacitor"'
+---
+type: run
+command: restartDicomCapacitor.ps1
+---
+type: run
+command: DICOMCapacitorService --install
+workingPath: %ProgramData%\Flux Inc\DICOM Capacitor

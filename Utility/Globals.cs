@@ -2,23 +2,23 @@
 using System.IO;
 using System.Reflection;
 
-namespace DICOMCapacitorWarden.util
+namespace DICOMCapacitorWarden.Utility
 {
   public static class Globals
   {
     private static string _logDirPath;
-    public static string ManualAssemblyProduct = null;
+    private static readonly string ManualAssemblyProduct = null;
     private static string _commonAppFolder;
-    private static Assembly _Assembly;
+    private static Assembly _assembly;
 
-    public static Assembly AppAssembly
+    private static Assembly AppAssembly
     {
-      set => _Assembly = value;
+      set => _assembly = value;
       get
       {
-        if (null == _Assembly)
+        if (null == _assembly)
           return Assembly.GetExecutingAssembly();
-        return _Assembly;
+        return _assembly;
       }
     }
 
@@ -32,7 +32,8 @@ namespace DICOMCapacitorWarden.util
       }
       set => _logDirPath = value;
     }
-    public static string CommonAppFolderSubdirectory(string name)
+
+    private static string CommonAppFolderSubdirectory(string name)
     {
       var tmp = Path.Combine(CommonAppFolder, name);
 
@@ -52,7 +53,7 @@ namespace DICOMCapacitorWarden.util
       return null;
     }
 
-    public static string CommonAppFolder
+    private static string CommonAppFolder
     {
       get
       {
@@ -77,7 +78,7 @@ namespace DICOMCapacitorWarden.util
       set => _commonAppFolder = value;
     }
 
-    public static string AssemblyProduct
+    private static string AssemblyProduct
     {
       get
       {
