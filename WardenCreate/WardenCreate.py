@@ -27,8 +27,8 @@ tmpdir = tempfile.mkdtemp()
 tmppayload = os.path.join(tmpdir, "payload/")
 os.mkdir(tmppayload)
 
-if len(sys.argv) != 2:
-    print("Please supply a directory name")
+if len(sys.argv) != 3:
+    print("Please supply a directory name and modeflag (r/n)")
     sys.exit()
     
 os.chdir(sys.argv[1])
@@ -56,7 +56,7 @@ print("---payload.zip created---")
 
 payloadhash = sha256sum(os.path.join(tmpdir, "payload.zip"))
 
-finalname = f"warden-{payloadhash}"
+finalname = f"warden-{payloadhash}" if sys.argv[2] == 'n' else f"warden-repeat_{payloadhash}"
 
 os.mkdir(finalname)
 
