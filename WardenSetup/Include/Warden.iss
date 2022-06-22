@@ -1,5 +1,5 @@
 #define MyAppName "DICOM Capacitor Warden"
-#define MyAppMajorVersion "1.0"
+#define MyAppMajorVersion "1.0.1"
 #define MyAppPublisher "Flux Inc"
 #define MyAppUrl "https://fluxinc.ca"
 #define MyAppExeName "DICOMCapacitorWarden.exe"
