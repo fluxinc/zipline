@@ -6,6 +6,7 @@ using Mono.Options;
 using System;
 using System.Collections.Generic;
 using System.Configuration.Install;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -54,6 +55,7 @@ namespace DICOMCapacitorWarden
       if (!Environment.UserInteractive)
       {
         var servicesToRun = new ServiceBase[] { service };
+        Process.Start("sc", $"failure {ServiceName} reset= 86400 actions=restart/120000/restart/120000//");
         ServiceBase.Run(servicesToRun);
       }
       else
