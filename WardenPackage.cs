@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -19,6 +18,9 @@ namespace DICOMCapacitorWarden
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
     private static readonly string HashLog = Path.Combine(Globals.LogDirPath, "hash.log");
     private static readonly string ClientLog = Path.Combine(Globals.LogDirPath, "update.log");
+
+    private static readonly string AdditionalReturnDirectory =
+      Environment.ExpandEnvironmentVariables("%tmp%\\WardenReturnDirectory\\");
 
     public bool IgnoreHashLog { get; set; }
     private string TempPath => Path.GetTempPath();
@@ -203,13 +205,25 @@ namespace DICOMCapacitorWarden
         "log-" + Path.GetFileNameWithoutExtension(file.FullName)));
     }
 
+    private static void CopyAdditionalReturnFiles(
+      DirectoryInfo returndir, DirectoryInfo additionReturnDir)
+    {
+      foreach (DirectoryInfo dir in additionReturnDir.GetDirectories())
+        CopyAdditionalReturnFiles(returndir.CreateSubdirectory(dir.Name), dir);
+      foreach (FileInfo file in additionReturnDir.GetFiles())
+        file.CopyTo(Path.Combine(returndir.FullName, file.Name));
+    }
+
     private static void ReturnLogFile(FileInfo file)
     {
       FileInfo log = new FileInfo(ClientLog);
 
       DirectoryInfo returnDir = GenerateReturnDirectory(file);
+      DirectoryInfo additionReturnDir = new DirectoryInfo(AdditionalReturnDirectory);
 
       log.CopyTo(returnDir.FullName + $"\\{log.Name}", true);
+
+      CopyAdditionalReturnFiles(returnDir, additionReturnDir);
 
       if (File.Exists(returnDir.FullName + ".zip"))
         File.Delete(returnDir.FullName + ".zip");
@@ -280,6 +294,7 @@ namespace DICOMCapacitorWarden
     public bool PrepareUpdate()
     {
       FlushClientLog();
+      SetupReturnFolder();
 
       if (!IgnoreHashLog && UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
       {
@@ -302,10 +317,22 @@ namespace DICOMCapacitorWarden
       return true;
     }
 
+    private void SetupReturnFolder()
+    {
+      try
+      {
+        Directory.Delete(AdditionalReturnDirectory, true);
+      }
+      catch (DirectoryNotFoundException ex)
+      {
+
+      }
+      Directory.CreateDirectory(AdditionalReturnDirectory);
+    }
+
     public bool ProcessUpdate()
     {
       LoggerWithRobot("Beginning Warden Update");
-
       try
       {
         OpenManifest();
