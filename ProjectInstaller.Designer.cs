@@ -40,9 +40,9 @@
       // 
       // serviceInstaller1
       // 
-      this.serviceInstaller1.Description = "Provides upgrade services for Dicom Capacitor";
-      this.serviceInstaller1.DisplayName = "Dicom Capacitor Warden";
-      this.serviceInstaller1.ServiceName = "DicomCapacitorWarden";
+      this.serviceInstaller1.Description = "Agnostic executable runner for system administration";
+      this.serviceInstaller1.DisplayName = "Warden";
+      this.serviceInstaller1.ServiceName = "Warden";
       this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
       // 
       // ProjectInstaller

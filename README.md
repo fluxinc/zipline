@@ -8,6 +8,8 @@ Warden is a agnostic script and executable runner for devices that cannot experi
 
 Warden comes with Inno setup files predefined, so all you need to do is compile a build through VStudio, and then run the Inno compiler to generate a binary.  This will automatically install Warden as a Windows service.
 
+You will also need to go into Utility/VerifyDetachedSignature.cs and replace the public key with whatever one you want to use.
+
 ## Contributing
 
 Please stick to semantic commits, if you are going to use a different style while on your personal branch, then please squash it down to a semantic version for any PRs.
@@ -21,7 +23,8 @@ Please stick to semantic commits, if you are going to use a different style whil
 - Provides return logs to the USB.
 - Ability to return arbitrary files too.
 - Agnostic scripts or executables can be run, it is also easy to customize run commands on particular files
-- Synthesized status updates for headless operation
+- Synthesized status updates for headless operation.
+- Basic error handling to continue processing if one script/exe fails
 
 ## TODO
 

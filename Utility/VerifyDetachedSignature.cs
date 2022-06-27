@@ -9,7 +9,8 @@ namespace DICOMCapacitorWarden.Utility
   {
     private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
 
-    private static readonly string FluxPublicKey =
+    // Replace this with your public key
+    private static readonly string WardenPublicKey =
         @"-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQGNBGKfV6YBDADYkjPJ7B4HL1lWQEb/r+zSLyde/RPxacWpgmEmHpi7kpIJ23ku
@@ -78,7 +79,7 @@ Qvg8Zi0flChC6hlyLg==
         string inputFileName)
     {
       using var input = File.OpenRead(inputFileName);
-      using var keyIn = new MemoryStream(Encoding.UTF8.GetBytes(FluxPublicKey));
+      using var keyIn = new MemoryStream(Encoding.UTF8.GetBytes(WardenPublicKey));
 
       return VerifySignature(fileName, input, keyIn);
     }

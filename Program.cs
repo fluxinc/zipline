@@ -15,7 +15,7 @@ namespace DICOMCapacitorWarden
 {
   internal static class Program
   {
-    private const string ServiceName = "DicomCapacitorWarden";
+    private const string ServiceName = "Warden";
     private static bool Quitting;
 
     static void Main(string[] args)
@@ -35,7 +35,7 @@ namespace DICOMCapacitorWarden
       }
       catch (OptionException ex)
       {
-        Console.WriteLine("DICOM Capacitor Warden Service");
+        Console.WriteLine("Warden Service");
         Console.WriteLine(ex.Message);
         return;
       }

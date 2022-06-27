@@ -33,6 +33,10 @@ namespace DICOMCapacitorWarden
     public static string HashLogText = null;
     public int UpdateErrors = 0;
 
+    /* Any executable/script in the manifest.yml will be filtered through this
+     * list.  You can add substitutions and flags to that substitution if you'd
+     * like to modify how a particular executable/script will be run.
+    */
     private static List<(string, string, string)> CommandSuffixSubstitution =
       new List<(string, string, string)>
       {
