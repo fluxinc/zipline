@@ -180,9 +180,12 @@ namespace DICOMCapacitorWarden
       return match.Groups[1].Value;
     }
 
-    private static void LogHashCode(string hashcode)
+    private static void LogHashCode(string hashCode)
     {
-      File.AppendAllText(HashLog, hashcode + Environment.NewLine);
+      var match = Regex.Match(hashCode, "^repeat_(.*)");
+      if (match.Success) return;
+
+      File.AppendAllText(HashLog, hashCode + Environment.NewLine);
       HashLogText = null;
     }
 
