@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("DICOMCapacitorWarden")]
+[assembly: AssemblyTitle("Zipline")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Flux, Inc.")]
-[assembly: AssemblyProduct("DICOM Capacitor Warden")]
+[assembly: AssemblyProduct("Zipline")]
 [assembly: AssemblyCopyright("Copyright Flux, Inc. ©  2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

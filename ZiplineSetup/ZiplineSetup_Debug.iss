@@ -1,3 +1,3 @@
 #define MyAppConfiguration "Debug"
 #define MyAppSetupSuffix "Debug"
-#include "Include\Warden.iss"
+#include "Include\Zipline.iss"

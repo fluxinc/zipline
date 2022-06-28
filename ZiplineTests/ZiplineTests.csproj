@@ -27,7 +27,7 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DICOMCapacitorWarden.csproj" />
+    <ProjectReference Include="..\Zipline.csproj" />
   </ItemGroup>
 
 </Project>

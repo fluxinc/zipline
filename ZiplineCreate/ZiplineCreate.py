@@ -58,7 +58,7 @@ def main():
             targetdir = arg
 
     if targetdir == "":
-        print("WardenCreate Error: Directory not specified.")
+        print("ZiplineCreate Error: Directory not specified.")
         exit(1)
         
     tmpdir = tempfile.mkdtemp()
@@ -67,7 +67,7 @@ def main():
     os.chdir(targetdir)
     files = os.listdir()
     cprint(f"---Source Directory: {targetdir} Temp Directory: {tmpdir}---")
-    cprint("---Moving the following files into a Warden update zip---")
+    cprint("---Moving the following files into a Zipline update zip---")
 
     for (x) in files:
         cprint(x)
@@ -83,7 +83,7 @@ def main():
     cprint("---payload.zip created---")
 
     payloadhash = sha256sum(os.path.join(tmpdir, "payload.zip"))
-    finalname = f"warden-{payloadhash}" if not repeatable else f"warden-repeat_{payloadhash}"
+    finalname = f"Zipline-{payloadhash}" if not repeatable else f"zipline-repeat_{payloadhash}"
     os.mkdir(finalname)
     cprint("---Signing Payload---")
     

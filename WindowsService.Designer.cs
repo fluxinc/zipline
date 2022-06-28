@@ -1,4 +1,4 @@
-﻿namespace DICOMCapacitorWarden
+﻿namespace Zipline
 {
   partial class WindowsService
   {

@@ -1,12 +1,12 @@
-# Warden
+# Zipline
 
-_When the internet isn't there;  Warden is._
+_When the internet isn't there;  Zipline is._
 
-Warden is a agnostic script and executable runner for devices that cannot experience the world wide web.  Currently, this operates through a windows service which watches for new USB devices.  The root directory of the new device is scanned for any zip files matching the warden pattern, and if found, those files are processed as updates.
+Zipline is a agnostic script and executable runner for devices that cannot experience the world wide web.  Currently, this operates through a windows service which watches for new USB devices.  The root directory of the new device is scanned for any zip files matching the zipline pattern, and if found, those files are processed as updates.
 
 ## Installing
 
-Warden comes with Inno setup files predefined, so all you need to do is compile a build through VStudio, and then run the Inno compiler to generate a binary.  This will automatically install Warden as a Windows service.
+Zipline comes with Inno setup files predefined, so all you need to do is compile a build through VStudio, and then run the Inno compiler to generate a binary.  This will automatically install Zipline as a Windows service.
 
 You will also need to go into Utility/VerifyDetachedSignature.cs and replace the public key with whatever one you want to use.
 

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Configuration.Install;
 
-namespace DICOMCapacitorWarden
+namespace Zipline
 {
   [RunInstaller(true)]
   public partial class ProjectInstaller : Installer

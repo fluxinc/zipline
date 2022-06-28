@@ -1,4 +1,4 @@
-﻿namespace DICOMCapacitorWarden
+﻿namespace Zipline
 {
   partial class ProjectInstaller
   {
@@ -41,8 +41,8 @@
       // serviceInstaller1
       // 
       this.serviceInstaller1.Description = "Agnostic executable runner for system administration";
-      this.serviceInstaller1.DisplayName = "Warden";
-      this.serviceInstaller1.ServiceName = "Warden";
+      this.serviceInstaller1.DisplayName = "Zipline";
+      this.serviceInstaller1.ServiceName = "Zipline";
       this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
       // 
       // ProjectInstaller

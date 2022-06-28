@@ -29,7 +29,7 @@
                         (lambda (in)
                           (bytes->hex-string
                            (sha256-bytes in)))))
-         (final-name (string-append "warden-" sha256-hash))
+         (final-name (string-append "zipline-" sha256-hash))
          (zipped-name (string-append final-name ".zip")))
     
     (make-directory (build-path temp-dir final-name))

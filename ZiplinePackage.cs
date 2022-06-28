@@ -1,4 +1,4 @@
-﻿using DICOMCapacitorWarden.Utility;
+﻿using Zipline.Utility;
 using log4net;
 using System;
 using System.Collections.Generic;
@@ -10,25 +10,25 @@ using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using static DICOMCapacitorWarden.Utility.VerifyDetachedSignature;
+using static Zipline.Utility.VerifyDetachedSignature;
 
-namespace DICOMCapacitorWarden
+namespace Zipline
 {
-  public class WardenPackage
+  public class ZiplinePackage
   {
-    private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
+    private static readonly ILog Logger = LogManager.GetLogger("ZiplineLog");
     private static readonly string HashLog = Path.Combine(Globals.LogDirPath, "hash.log");
     private static readonly string ClientLog = Path.Combine(Globals.LogDirPath, "update.log");
 
     private static readonly string AdditionalReturnDirectory =
-      Environment.ExpandEnvironmentVariables("%tmp%\\WardenReturnDirectory\\");
+      Environment.ExpandEnvironmentVariables("%tmp%\\ZiplineReturnDirectory\\");
 
     public bool IgnoreHashLog { get; set; }
     private string TempPath => Path.GetTempPath();
-    private List<Manifest> manifests { get; set; }
-    private FileInfo updateZipFile { get; set; }
-    private DirectoryInfo payloadDirectory { get; set; }
-    private DirectoryInfo extractUpdateFolder { get; set; }
+    private List<Manifest> Manifests { get; set; }
+    private FileInfo UpdateZipFile { get; set; }
+    private DirectoryInfo PayloadDirectory { get; set; }
+    private DirectoryInfo ExtractUpdateFolder { get; set; }
 
     public static string HashLogText = null;
     public int UpdateErrors = 0;
@@ -49,17 +49,17 @@ namespace DICOMCapacitorWarden
     private SpeechSynthesizer synth => new SpeechSynthesizer();
 #endif
 
-    public WardenPackage(FileInfo updatePath)
+    public ZiplinePackage(FileInfo updatePath)
     {
-      updateZipFile = updatePath;
+      UpdateZipFile = updatePath;
 
-      extractUpdateFolder = Directory.CreateDirectory(
-        Path.Combine(TempPath, Path.GetFileNameWithoutExtension(updateZipFile.FullName)));
+      ExtractUpdateFolder = Directory.CreateDirectory(
+        Path.Combine(TempPath, Path.GetFileNameWithoutExtension(UpdateZipFile.FullName)));
 
-      payloadDirectory = Directory.CreateDirectory(
-        Path.Combine(extractUpdateFolder.FullName, "payload"));
+      PayloadDirectory = Directory.CreateDirectory(
+        Path.Combine(ExtractUpdateFolder.FullName, "payload"));
 
-      manifests = new List<Manifest>();
+      Manifests = new List<Manifest>();
     }
 
     private static void ExtractFile(FileInfo file, string extractDirectory)
@@ -158,7 +158,7 @@ namespace DICOMCapacitorWarden
 
       try
       {
-        var manifestFile = payloadDirectory.GetFiles("manifest.yml")[0];
+        var manifestFile = PayloadDirectory.GetFiles("manifest.yml")[0];
 
         using var manifestReader = new StreamReader(manifestFile.FullName);
 
@@ -169,7 +169,7 @@ namespace DICOMCapacitorWarden
         var manifestEnumerator =
           YamlSerializerExtensions.DeserializeMany<Manifest>(deserializer, manifestReader);
 
-        foreach (var manifest in manifestEnumerator) manifests.Add(manifest);
+        foreach (var manifest in manifestEnumerator) Manifests.Add(manifest);
 
       }
       catch (Exception ex)
@@ -180,7 +180,7 @@ namespace DICOMCapacitorWarden
 
     private static string StripHashCode(string filename)
     {
-      var match = Regex.Match(filename, "^warden-(.*).zip");
+      var match = Regex.Match(filename, "^zipline-(.*).zip");
       return match.Groups[1].Value;
     }
 
@@ -204,7 +204,7 @@ namespace DICOMCapacitorWarden
 
     private void CleanupExtractedFiles(FileInfo updateFile)
     {
-      extractUpdateFolder.Delete(true);
+      ExtractUpdateFolder.Delete(true);
     }
 
     private static DirectoryInfo GenerateReturnDirectory(FileInfo file)
@@ -250,24 +250,24 @@ namespace DICOMCapacitorWarden
 
     private void ExtractPayload()
     {
-      ExtractFile(updateZipFile, TempPath);
-      var payloadZipFile = extractUpdateFolder.GetFiles("payload.zip")[0];
+      ExtractFile(UpdateZipFile, TempPath);
+      var payloadZipFile = ExtractUpdateFolder.GetFiles("payload.zip")[0];
 
       if (!VerifyFile(payloadZipFile)) throw new Exception("Bad payload signature or missing payload.");
 
-      ExtractFile(payloadZipFile, extractUpdateFolder.FullName);
+      ExtractFile(payloadZipFile, ExtractUpdateFolder.FullName);
     }
 
     private void ProcessManifest()
     {
-      foreach (var manifest in manifests)
+      foreach (var manifest in Manifests)
       {
         try
         {
           switch (manifest.Type.ToLower())
           {
             case "run":
-              ExecuteCommand(manifest, payloadDirectory);
+              ExecuteCommand(manifest, PayloadDirectory);
               break;
             default:
               Logger.Info($"Type {manifest.Type} unimplemented.");
@@ -291,11 +291,11 @@ namespace DICOMCapacitorWarden
     {
       var logMessage = (status) ? "completed" : "failed";
 
-      LoggerWithRobot($"Warden update {logMessage} with {UpdateErrors} errors.");
-      ReturnLogFile(updateZipFile);
-      CleanupExtractedFiles(updateZipFile);
+      LoggerWithRobot($"Zipline update {logMessage} with {UpdateErrors} errors.");
+      ReturnLogFile(UpdateZipFile);
+      CleanupExtractedFiles(UpdateZipFile);
 
-      if (!IgnoreHashLog && status) LogHashCode(StripHashCode(updateZipFile.Name));
+      if (!IgnoreHashLog && status) LogHashCode(StripHashCode(UpdateZipFile.Name));
       return;
     }
 
@@ -304,10 +304,10 @@ namespace DICOMCapacitorWarden
       FlushClientLog();
       SetupReturnFolder();
 
-      if (!IgnoreHashLog && UpdateAlreadyProcessed(StripHashCode(updateZipFile.Name)))
+      if (!IgnoreHashLog && UpdateAlreadyProcessed(StripHashCode(UpdateZipFile.Name)))
       {
-        Logger.Info($"{updateZipFile.Name} has already been processed.");
-        ReturnLogFile(updateZipFile);
+        Logger.Info($"{UpdateZipFile.Name} has already been processed.");
+        ReturnLogFile(UpdateZipFile);
         return false;
       }
       try
@@ -340,7 +340,7 @@ namespace DICOMCapacitorWarden
 
     public bool ProcessUpdate()
     {
-      LoggerWithRobot("Beginning Warden Update");
+      LoggerWithRobot("Beginning Zipline Update");
       try
       {
         OpenManifest();
