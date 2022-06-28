@@ -1,9 +1,11 @@
 #!/bin/python3
-import shutil, tempfile, sys, os, hashlib
+import shutil, tempfile, sys, os, hashlib, getopt, subprocess
 from zipfile import ZipFile
 
-cwd = os.getcwd()
-
+def cprint(message):
+    if not backend:
+        print(message)
+        
 def sha256sum(filename):
     hash = hashlib.sha256()
     buff = bytearray(128*1024)
@@ -23,56 +25,83 @@ def get_all_file_paths(directory):
   
     return file_paths
 
-tmpdir = tempfile.mkdtemp()
-tmppayload = os.path.join(tmpdir, "payload/")
-os.mkdir(tmppayload)
-
-if len(sys.argv) != 2:
-    print("Please supply a directory name")
-    sys.exit()
+def main():
+    global backend
+    global repeatable
+    global targetdir
+    cwd = os.getcwd()
+    argv = sys.argv[1:]
     
-os.chdir(sys.argv[1])
-files = os.listdir()
+    try:
+        opts, args = getopt.getopt(argv, "d:rb",
+                                   ["repeatable",
+                                    "backend",
+                                    "directory="])
+    except:
+        print("Error parsing command line arguments.")
 
-print(f"---Source Directory: {sys.argv[1]} Temp Directory: {tmpdir}---")
-print(f"---Temp Payload Dir: {tmppayload}---")
-print("---Moving the following files into a Warden update zip---")
+    backend = False
+    repeatable = False
+    targetdir = ""
+    
+    for opt,arg in opts:
+        
+        if opt in ['-r', '--repeatable']:
+            #Create a repeatable style update zip
+            repeatable = True
+            
+        elif opt in ['-b', '--backend']:
+            #Future use, only output the created zip's name
+            backend = True
 
-for (x) in files:
-    print(x)
+        elif opt in ['-d', '-directory']:
+            targetdir = arg
 
-shutil.copytree(os.getcwd(), tmppayload, dirs_exist_ok=True)
+    if targetdir == "":
+        print("WardenCreate Error: Directory not specified.")
+        exit(1)
+        
+    tmpdir = tempfile.mkdtemp()
+    tmppayload = os.path.join(tmpdir, "payload/")
+    os.mkdir(tmppayload)
+    os.chdir(targetdir)
+    files = os.listdir()
+    cprint(f"---Source Directory: {targetdir} Temp Directory: {tmpdir}---")
+    cprint("---Moving the following files into a Warden update zip---")
 
-print("---Files copied.  zipping payload/---")
+    for (x) in files:
+        cprint(x)
 
-os.chdir(tmpdir)
-file_paths = get_all_file_paths("payload/")
+    shutil.copytree(os.getcwd(), tmppayload, dirs_exist_ok=True)
 
-with ZipFile(os.path.join(tmpdir, "payload.zip"), 'w') as zip:
-    for file in file_paths:
-        zip.write(file)
+    os.chdir(tmpdir)
+    file_paths = get_all_file_paths("payload/")
 
-print("---payload.zip created---")
+    with ZipFile(os.path.join(tmpdir, "payload.zip"), 'w') as zip:
+        for file in file_paths:
+            zip.write(file)
+    cprint("---payload.zip created---")
 
-payloadhash = sha256sum(os.path.join(tmpdir, "payload.zip"))
+    payloadhash = sha256sum(os.path.join(tmpdir, "payload.zip"))
+    finalname = f"warden-{payloadhash}" if not repeatable else f"warden-repeat_{payloadhash}"
+    os.mkdir(finalname)
+    cprint("---Signing Payload---")
+    
+    subprocess.run("gpg --detach-sign --default-key support@fluxinc.ca payload.zip", shell=True)
+    
+    shutil.copyfile("payload.zip", f"{finalname}/payload.zip")
+    shutil.copyfile("payload.zip.sig", f"{finalname}/payload.zip.sig")
 
-finalname = f"warden-{payloadhash}"
+    with ZipFile(os.path.join(tmpdir, f"{finalname}.zip"), 'w') as zip:
+        zip.write(f"{finalname}/payload.zip")
+        zip.write(f"{finalname}/payload.zip.sig")
 
-os.mkdir(finalname)
+    cprint("---Update zip generated---")
 
-print("---Signing Payload---")
+    shutil.copyfile(f"{finalname}.zip", os.path.join(cwd, f"{finalname}.zip"))
 
-os.system(f"gpg --detach-sign --default-key support@fluxinc payload.zip")
-
-shutil.copyfile("payload.zip", f"{finalname}/payload.zip")
-shutil.copyfile("payload.zip.sig", f"{finalname}/payload.zip.sig")
-
-with ZipFile(os.path.join(tmpdir, f"{finalname}.zip"), 'w') as zip:
-    zip.write(f"{finalname}/payload.zip")
-    zip.write(f"{finalname}/payload.zip.sig")
-
-print("---Update zip generated---")
-
-shutil.copyfile(f"{finalname}.zip", os.path.join(cwd, f"{finalname}.zip"))
-
-print("---Completed---")
+    cprint("---Completed---")
+    
+    if backend:
+        print(finalname)
+main()
