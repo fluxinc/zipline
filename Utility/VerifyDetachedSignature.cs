@@ -53,7 +53,7 @@ Qvg8Zi0flChC6hlyLg==
 =KFaR
 -----END PGP PUBLIC KEY BLOCK-----";
 
-    // If we want to use detached signatures. Modified for our use.
+    // Modified for our use.
     // https://github.com/bcgit/bc-csharp/blob/master/crypto/test/src/openpgp/examples/DetachedSignatureProcessor.cs
 
     public static bool VerifyFile(FileInfo file)
