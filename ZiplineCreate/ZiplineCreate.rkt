@@ -43,7 +43,7 @@
     (copy-file (build-path temp-dir zipped-name)
                (build-path payload-dir "../" zipped-name))))
 
-(define (warden-create)
+(define (zipline-create)
   (display "Creating Payload.zip\n")
   (create-payload)
   (display "Signing Payload.zip\n")
@@ -56,5 +56,5 @@
   (read-line)
   (exit))
 
-(warden-create)
+(zipline-create)
 
