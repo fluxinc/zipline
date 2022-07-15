@@ -1,16 +1,16 @@
-﻿using Zipline.Utility;
-using log4net;
+﻿using log4net;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using Zipline.Utility;
 using static Zipline.Utility.VerifyDetachedSignature;
+using System.Speech.Synthesis;
 
 namespace Zipline
 {
@@ -357,10 +357,9 @@ namespace Zipline
       return true;
     }
 
-    public bool Update()
+    public void Update()
     {
-      if (PrepareUpdate()) return ProcessUpdate();
-      return false;
+      if (PrepareUpdate()) ProcessUpdate();
     }
   }
 }

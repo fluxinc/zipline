@@ -1,7 +1,7 @@
 ﻿using log4net;
+using System;
 using System.IO;
 using System.ServiceProcess;
-using System.Speech.Synthesis;
 using Usb.Events;
 
 namespace Zipline
@@ -24,7 +24,9 @@ namespace Zipline
     internal void TestStartupAndStop(string[] args)
     {
       OnStart(args);
-      while (true) { }
+      Console.WriteLine("\nPress any key to terminate Zipline...");
+      Console.ReadLine();
+      Console.WriteLine("\nZipline terminating...\n");
       OnStop();
     }
 
@@ -39,7 +41,6 @@ namespace Zipline
 
     protected override void OnStop()
     {
-      Logger.Info("Zipline terminating...");
     }
 
     private void OnUsbDriveMounted(string path)
@@ -51,7 +52,7 @@ namespace Zipline
 
       var files = dir.GetFiles("zipline*.zip");
 
-      if (files.Length > 0) { Finished = true; }
+      if (files.Length == 0) { return; }
 
       foreach (var updateZipFile in files)
       {
@@ -59,8 +60,7 @@ namespace Zipline
         ziplinePackage.Update();
       }
 
-      if (Finished) LoggerWithRobot("All updates complete. You may now remove the flash drive.");
-      Finished = false;
+      LoggerWithRobot("All updates complete. You may now remove the flash drive.");
     }
 
     private static void OnUsbDriveEjected(string path)
