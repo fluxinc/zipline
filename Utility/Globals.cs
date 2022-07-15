@@ -2,7 +2,7 @@
 using System.IO;
 using System.Reflection;
 
-namespace DICOMCapacitorWarden.Utility
+namespace Zipline.Utility
 {
   public static class Globals
   {

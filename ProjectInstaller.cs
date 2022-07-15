@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Configuration.Install;
 
-namespace DICOMCapacitorWarden
+namespace Zipline
 {
   [RunInstaller(true)]
   public partial class ProjectInstaller : Installer
@@ -12,6 +12,11 @@ namespace DICOMCapacitorWarden
     }
 
     private void serviceProcessInstaller1_AfterInstall(object sender, InstallEventArgs e)
+    {
+
+    }
+
+    private void serviceInstaller1_AfterInstall(object sender, InstallEventArgs e)
     {
 
     }

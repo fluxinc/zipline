@@ -1,4 +1,4 @@
-﻿using DICOMCapacitorWarden.Utility;
+﻿using Zipline.Utility;
 using log4net;
 using log4net.Config;
 using log4net.Core;
@@ -11,11 +11,11 @@ using System.Linq;
 using System.Reflection;
 using System.ServiceProcess;
 
-namespace DICOMCapacitorWarden
+namespace Zipline
 {
   internal static class Program
   {
-    private const string ServiceName = "DicomCapacitorWarden";
+    private const string ServiceName = "Zipline";
     private static bool Quitting;
 
     static void Main(string[] args)
@@ -35,7 +35,7 @@ namespace DICOMCapacitorWarden
       }
       catch (OptionException ex)
       {
-        Console.WriteLine("DICOM Capacitor Warden Service");
+        Console.WriteLine("Zipline Service");
         Console.WriteLine(ex.Message);
         return;
       }
@@ -64,7 +64,7 @@ namespace DICOMCapacitorWarden
 
     private static void SetupLog4Net()
     {
-      GlobalContext.Properties["LogName"] = Path.Combine(Globals.LogDirPath, "warden.log");
+      GlobalContext.Properties["LogName"] = Path.Combine(Globals.LogDirPath, "zipline.log");
       GlobalContext.Properties["UpdateLogName"] = Path.Combine(Globals.LogDirPath, "update.log");
       XmlConfigurator.Configure();
 #if DEBUG || DEBUG_ACTIVATION

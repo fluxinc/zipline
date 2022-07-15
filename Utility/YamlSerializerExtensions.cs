@@ -4,7 +4,7 @@ using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 
-namespace DICOMCapacitorWarden.Utility
+namespace Zipline.Utility
 {
   public static class YamlSerializerExtensions
   {

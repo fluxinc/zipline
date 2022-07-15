@@ -1,0 +1,11 @@
+---
+type: run
+command: script1.bat
+arguments: '-path "%ProgramData%\\Flux Inc\\DICOM Capacitor"'
+---
+type: run
+command: restartDicomCapacitor.ps1
+---
+type: run
+command: DICOMCapacitorService --install
+workingPath: %ProgramData%\Flux Inc\DICOM Capacitor

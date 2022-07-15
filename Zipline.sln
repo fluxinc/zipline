@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32328.378
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zipline", "Zipline.csproj", "{52CBE8EF-CE0E-43F4-A282-31000DB6C161}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZiplineTests", "ZiplineTests\ZiplineTests.csproj", "{C6103712-28DB-47CF-AED4-4176DAC6C61E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{A33E1848-B339-4B06-9078-72A485B53AA6}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		package.json = package.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{DBF81A45-AD63-4381-A734-1869728D1465}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{52CBE8EF-CE0E-43F4-A282-31000DB6C161}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52CBE8EF-CE0E-43F4-A282-31000DB6C161}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52CBE8EF-CE0E-43F4-A282-31000DB6C161}.Debug|x64.ActiveCfg = Debug|x64
+		{52CBE8EF-CE0E-43F4-A282-31000DB6C161}.Debug|x64.Build.0 = Debug|x64
+		{52CBE8EF-CE0E-43F4-A282-31000DB6C161}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52CBE8EF-CE0E-43F4-A282-31000DB6C161}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52CBE8EF-CE0E-43F4-A282-31000DB6C161}.Release|x64.ActiveCfg = Release|x64
+		{52CBE8EF-CE0E-43F4-A282-31000DB6C161}.Release|x64.Build.0 = Release|x64
+		{C6103712-28DB-47CF-AED4-4176DAC6C61E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6103712-28DB-47CF-AED4-4176DAC6C61E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6103712-28DB-47CF-AED4-4176DAC6C61E}.Debug|x64.ActiveCfg = Debug|x64
+		{C6103712-28DB-47CF-AED4-4176DAC6C61E}.Debug|x64.Build.0 = Debug|x64
+		{C6103712-28DB-47CF-AED4-4176DAC6C61E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6103712-28DB-47CF-AED4-4176DAC6C61E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6103712-28DB-47CF-AED4-4176DAC6C61E}.Release|x64.ActiveCfg = Release|x64
+		{C6103712-28DB-47CF-AED4-4176DAC6C61E}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {42A02749-BD06-4E0D-B368-92C462C35011}
+	EndGlobalSection
+EndGlobal

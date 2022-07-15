@@ -1,14 +1,14 @@
 ﻿using log4net;
+using System;
 using System.IO;
 using System.ServiceProcess;
-using System.Speech.Synthesis;
 using Usb.Events;
 
-namespace DICOMCapacitorWarden
+namespace Zipline
 {
   public partial class WindowsService : ServiceBase
   {
-    private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
+    private static readonly ILog Logger = LogManager.GetLogger("ZiplineLog");
 
     private static bool Finished;
 
@@ -24,13 +24,15 @@ namespace DICOMCapacitorWarden
     internal void TestStartupAndStop(string[] args)
     {
       OnStart(args);
-      for(; ;)
+      Console.WriteLine("\nPress any key to terminate Zipline...");
+      Console.ReadLine();
+      Console.WriteLine("\nZipline terminating...\n");
       OnStop();
     }
 
     protected override void OnStart(string[] args)
     {
-      Logger.Info("Starting Warden...");
+      Logger.Info("Starting Zipline...");
       var usbEventWatcher = new UsbEventWatcher();
 
       usbEventWatcher.UsbDriveEjected += (_, path) => OnUsbDriveEjected(path);
@@ -39,28 +41,26 @@ namespace DICOMCapacitorWarden
 
     protected override void OnStop()
     {
-      Logger.Info("Warden terminating...");
     }
 
     private void OnUsbDriveMounted(string path)
     {
-      Logger.Info($"{path} was mounted.  Searching for Warden files...");
+      Logger.Info($"{path} was mounted.  Searching for Zipline files...");
       var dir = Directory.CreateDirectory(path);
 
       if (!dir.Exists) return;
 
-      var files = dir.GetFiles("warden*.zip");
+      var files = dir.GetFiles("zipline*.zip");
 
-      if (files.Length > 0) { Finished = true; }
+      if (files.Length == 0) { return; }
 
       foreach (var updateZipFile in files)
       {
-        var wardenPackage = new WardenPackage(updateZipFile);
-        wardenPackage.Update();
+        var ziplinePackage = new ZiplinePackage(updateZipFile);
+        ziplinePackage.Update();
       }
 
-      if (Finished) LoggerWithRobot("All updates complete. You may now remove the flash drive.");
-      Finished = false;
+      LoggerWithRobot("All updates complete. You may now remove the flash drive.");
     }
 
     private static void OnUsbDriveEjected(string path)

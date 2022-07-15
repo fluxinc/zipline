@@ -3,13 +3,14 @@ using Org.BouncyCastle.Bcpg.OpenPgp;
 using System.IO;
 using System.Text;
 
-namespace DICOMCapacitorWarden.Utility
+namespace Zipline.Utility
 {
   internal static class VerifyDetachedSignature
   {
-    private static readonly ILog Logger = LogManager.GetLogger("WardenLog");
+    private static readonly ILog Logger = LogManager.GetLogger("ZiplineLog");
 
-    private static readonly string FluxPublicKey =
+    // Replace this with your public key
+    private static readonly string ZiplinePublicKey =
         @"-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQGNBGKfV6YBDADYkjPJ7B4HL1lWQEb/r+zSLyde/RPxacWpgmEmHpi7kpIJ23ku
@@ -52,7 +53,7 @@ Qvg8Zi0flChC6hlyLg==
 =KFaR
 -----END PGP PUBLIC KEY BLOCK-----";
 
-    // If we want to use detached signatures. Modified for our use.
+    // Modified for our use.
     // https://github.com/bcgit/bc-csharp/blob/master/crypto/test/src/openpgp/examples/DetachedSignatureProcessor.cs
 
     public static bool VerifyFile(FileInfo file)
@@ -78,7 +79,7 @@ Qvg8Zi0flChC6hlyLg==
         string inputFileName)
     {
       using var input = File.OpenRead(inputFileName);
-      using var keyIn = new MemoryStream(Encoding.UTF8.GetBytes(FluxPublicKey));
+      using var keyIn = new MemoryStream(Encoding.UTF8.GetBytes(ZiplinePublicKey));
 
       return VerifySignature(fileName, input, keyIn);
     }

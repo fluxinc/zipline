@@ -1,4 +1,4 @@
-﻿namespace DICOMCapacitorWarden.Utility
+﻿namespace Zipline.Utility
 {
   internal class Manifest
   {
