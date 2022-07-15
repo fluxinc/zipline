@@ -4,7 +4,7 @@ namespace ZiplineTests
 {
   public class ZiplineManifestTests
   {
-    private string examples = "../../../../examples/zipline-";
+    private string examples = "../../../../../Examples/zipline-";
 
     [Fact]
     public void FailsOnMissingManifest()

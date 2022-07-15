@@ -218,6 +218,7 @@ namespace Zipline
     {
       foreach (DirectoryInfo dir in additionReturnDir.GetDirectories())
         CopyAdditionalReturnFiles(returndir.CreateSubdirectory(dir.Name), dir);
+
       foreach (FileInfo file in additionReturnDir.GetFiles())
         file.CopyTo(Path.Combine(returndir.FullName, file.Name));
     }

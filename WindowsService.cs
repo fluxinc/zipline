@@ -24,7 +24,7 @@ namespace Zipline
     internal void TestStartupAndStop(string[] args)
     {
       OnStart(args);
-      for(; ;)
+      while (true) { }
       OnStop();
     }
 
