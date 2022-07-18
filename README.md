@@ -1,5 +1,7 @@
 ![Zipline Logo](zipline-logo.svg)
 
+<img src="zipline-logo.svg" width="200" />
+
 # Zipline
 
 _When the internet isn't there;  Zipline is._
