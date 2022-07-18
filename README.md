@@ -1,6 +1,4 @@
-![Zipline Logo](zipline-logo.svg)
-
-<img src="zipline-logo.svg" width="200" />
+<img src="zipline-logo.svg" width="300" alt="Zipline logo" />
 
 # Zipline
 
