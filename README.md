@@ -1,3 +1,5 @@
+![Zipline Logo](zipline-logo.png)
+
 # Zipline
 
 _When the internet isn't there;  Zipline is._
