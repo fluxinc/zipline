@@ -29,3 +29,8 @@ Please stick to semantic commits, if you are going to use a different style whil
 ## TODO
 
 Please see our wiki and/or issues!
+
+License
+GNU General Public License v3.0 or later
+
+See [LICENSE](LICENSE) to see the full text.
