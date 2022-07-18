@@ -1,4 +1,4 @@
-![Zipline Logo](zipline-logo.png)
+![Zipline Logo](zipline-logo.svg)
 
 # Zipline
 
