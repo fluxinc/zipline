@@ -1,6 +1,6 @@
-<p style="text-align: center;">
+<div style="text-align: center; width: 100%">
 <img src="zipline-logo.svg" width="300" alt="Zipline logo" />
-</p>
+</div>
 
 # Zipline
 
