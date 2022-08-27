@@ -1,0 +1,1 @@
+This update zip will delete the Warden service and setup Zipline 1.0.2.  For transitioning the few Warden installs we have out there.
