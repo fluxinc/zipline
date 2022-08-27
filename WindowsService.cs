@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.ServiceProcess;
 using Usb.Events;
+using Zipline.Properties;
 
 namespace Zipline
 {
@@ -33,14 +34,16 @@ namespace Zipline
     protected override void OnStart(string[] args)
     {
       Logger.Info("Starting Zipline...");
-      var usbEventWatcher = new UsbEventWatcher();
+      Utility.Globals.LoadGlobalDefaults(Settings.Default);
 
+      var usbEventWatcher = new UsbEventWatcher();
       usbEventWatcher.UsbDriveEjected += (_, path) => OnUsbDriveEjected(path);
       usbEventWatcher.UsbDriveMounted += (_, path) => OnUsbDriveMounted(path);
     }
 
     protected override void OnStop()
     {
+      Logger.Info("Stopping Zipline...");
     }
 
     private void OnUsbDriveMounted(string path)

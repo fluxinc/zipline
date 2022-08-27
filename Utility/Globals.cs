@@ -1,6 +1,10 @@
-﻿using System;
+﻿using log4net;
+using System;
+using System.Collections;
+using System.Configuration;
 using System.IO;
 using System.Reflection;
+using YamlDotNet.Serialization;
 
 namespace Zipline.Utility
 {
@@ -10,6 +14,10 @@ namespace Zipline.Utility
     private static readonly string ManualAssemblyProduct = null;
     private static string _commonAppFolder;
     private static Assembly _assembly;
+    public static string ConfigFilePath => Path.Combine(CommonAppFolder, "config.yml");
+    public static bool GlobalConfigurationExists => File.Exists(ConfigFilePath);
+    private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
 
     private static Assembly AppAssembly
     {
@@ -90,6 +98,55 @@ namespace Zipline.Utility
         if (attributes.Length == 0)
           return "";
         return ((AssemblyProductAttribute)attributes[0]).Product;
+      }
+    }
+
+    public static bool LoadGlobalDefaults<T>(T settings, bool resetFirst = true) where T : ApplicationSettingsBase
+    {
+      try
+      {
+        if (resetFirst) settings.Reset();
+
+        if (GlobalConfigurationExists)
+        {
+          Logger.Info($"Loading configuration from '{ConfigFilePath}'.");
+
+          var deserializer = new Deserializer();
+          using (TextReader reader = File.OpenText(ConfigFilePath))
+          {
+            var defaults = deserializer.Deserialize<Hashtable>(reader);
+            foreach (SettingsProperty property in settings.Properties)
+              if (defaults[property.Name] != null)
+              {
+                Logger.Info($"  {property.Name} = '{defaults[property.Name]}'");
+
+                var propType = settings[property.Name].GetType();
+
+                if (propType == typeof(bool))
+                {
+                  settings[property.Name] = Convert.ToBoolean((string)defaults[property.Name]);
+                }
+                else
+                {
+                  settings[property.Name] = (string)defaults[property.Name];
+                }
+              }
+          }
+
+          settings.Save();
+          Logger.Info("Loaded configuration.");
+        }
+        else
+        {
+          Logger.Info("No configuration file to load, skipping.");
+        }
+
+        return true;
+      }
+      catch (Exception ex)
+      {
+        Logger.Warn($"Exception while loading configuration from '{ConfigFilePath}':", ex);
+        throw;
       }
     }
   }
