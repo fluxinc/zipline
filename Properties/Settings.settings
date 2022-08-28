@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="returnDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">%tmp%\\ZiplineReturnDirectory\\</Value>
     </Setting>
     <Setting Name="ignoreHashLog" Type="System.String" Scope="User">
       <Value Profile="(Default)">false</Value>

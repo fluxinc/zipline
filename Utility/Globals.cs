@@ -135,6 +135,12 @@ namespace Zipline.Utility
 
           settings.Save();
           Logger.Info("Loaded configuration.");
+
+          foreach (SettingsPropertyValue value in settings.PropertyValues)
+          {
+            Logger.Info($"  {value.Name} = '{value.PropertyValue}'");
+          }
+
         }
         else
         {
