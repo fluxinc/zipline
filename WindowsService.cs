@@ -80,13 +80,12 @@ namespace Zipline
     {
       if (String.IsNullOrEmpty(Settings.Default.virtualUSB)) return;
 
-      Logger.Info($"Virtual Drive setup at {Settings.Default.virtualUSB}");
       FileSystemWatcher watcher = new FileSystemWatcher();
       watcher.Path = Settings.Default.virtualUSB;
       watcher.Filter = "zipline*.zip";
       watcher.Created += OnVirtualCreate;
       watcher.EnableRaisingEvents = true;
-      Logger.Info("Virtual update complete.");
+      Logger.Info($"Virtual Drive setup at {Settings.Default.virtualUSB}");
     }
 
     private static void OnUsbDriveEjected(string path)
