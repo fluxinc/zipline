@@ -1,5 +1,5 @@
 #define MyAppName "Zipline"
-#define MyAppMajorVersion "1.0.1"
+#define MyAppMajorVersion "1.0.2"
 #define MyAppPublisher "Flux Inc"
 #define MyAppUrl "https://fluxinc.ca"
 #define MyAppExeName "Zipline.exe"
