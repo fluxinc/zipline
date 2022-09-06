@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.ServiceProcess;
+using System.Speech.Synthesis;
 using Usb.Events;
 
 namespace Zipline
