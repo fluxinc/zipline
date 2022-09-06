@@ -37,10 +37,10 @@ namespace Zipline.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("false")]
-        public string ignoreHashLog {
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ignoreHashLog {
             get {
-                return ((string)(this["ignoreHashLog"]));
+                return ((bool)(this["ignoreHashLog"]));
             }
             set {
                 this["ignoreHashLog"] = value;
@@ -49,10 +49,10 @@ namespace Zipline.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("true")]
-        public string enableVoice {
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool enableVoice {
             get {
-                return ((string)(this["enableVoice"]));
+                return ((bool)(this["enableVoice"]));
             }
             set {
                 this["enableVoice"] = value;
@@ -73,10 +73,10 @@ namespace Zipline.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string virtualRepeat {
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool virtualRepeat {
             get {
-                return ((string)(this["virtualRepeat"]));
+                return ((bool)(this["virtualRepeat"]));
             }
             set {
                 this["virtualRepeat"] = value;

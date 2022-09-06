@@ -73,6 +73,7 @@ namespace Zipline
     {
       Logger.Info($"New virtual USB file {e.Name}");
       var ziplinePackage = new ZiplinePackage(new FileInfo(e.FullPath));
+      ziplinePackage.IgnoreHashLog = Settings.Default.virtualRepeat;
       ziplinePackage.Update();
     }
 
@@ -98,7 +99,7 @@ namespace Zipline
       Logger.Info(strung);
 
 #if RELEASE
-      synth.Speak(strung);
+      if (Settings.Default.enableVoice) { synth.Speak(strung); }
 #endif
     }
   }

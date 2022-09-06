@@ -24,7 +24,7 @@ namespace Zipline
     private static readonly string AdditionalReturnDirectory =
       Environment.ExpandEnvironmentVariables(Settings.Default.returnDirectory);
 
-    public bool IgnoreHashLog { get; set; }
+    public bool IgnoreHashLog = Settings.Default.ignoreHashLog;
     private string TempPath => Path.GetTempPath();
     private List<Manifest> Manifests { get; set; }
     private FileInfo UpdateZipFile { get; set; }
@@ -89,7 +89,7 @@ namespace Zipline
       Logger.Info(strung);
 
 #if RELEASE
-      synth.Speak(strung);
+      if (Settings.Default.enableVoice) { synth.Speak(strung); }
 #endif
     }
 

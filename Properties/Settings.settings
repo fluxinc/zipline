@@ -5,17 +5,17 @@
     <Setting Name="returnDirectory" Type="System.String" Scope="User">
       <Value Profile="(Default)">%tmp%\\ZiplineReturnDirectory\\</Value>
     </Setting>
-    <Setting Name="ignoreHashLog" Type="System.String" Scope="User">
-      <Value Profile="(Default)">false</Value>
+    <Setting Name="ignoreHashLog" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="enableVoice" Type="System.String" Scope="User">
-      <Value Profile="(Default)">true</Value>
+    <Setting Name="enableVoice" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="virtualUSB" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="virtualRepeat" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+    <Setting Name="virtualRepeat" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>
