@@ -5,12 +5,13 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using Zipline.Properties;
 using Zipline.Utility;
 using static Zipline.Utility.VerifyDetachedSignature;
-using System.Speech.Synthesis;
 
 namespace Zipline
 {
@@ -21,9 +22,9 @@ namespace Zipline
     private static readonly string ClientLog = Path.Combine(Globals.LogDirPath, "update.log");
 
     private static readonly string AdditionalReturnDirectory =
-      Environment.ExpandEnvironmentVariables("%tmp%\\ZiplineReturnDirectory\\");
+      Environment.ExpandEnvironmentVariables(Settings.Default.returnDirectory);
 
-    public bool IgnoreHashLog { get; set; }
+    public bool IgnoreHashLog = Settings.Default.ignoreHashLog;
     private string TempPath => Path.GetTempPath();
     private List<Manifest> Manifests { get; set; }
     private FileInfo UpdateZipFile { get; set; }
@@ -88,7 +89,7 @@ namespace Zipline
       Logger.Info(strung);
 
 #if RELEASE
-      synth.Speak(strung);
+      if (Settings.Default.enableVoice) { synth.Speak(strung); }
 #endif
     }
 

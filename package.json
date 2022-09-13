@@ -1,6 +1,6 @@
 {
   "name": "Zipline",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Manages dicom-capacitor configurations and service states.",
   "main": "Zipline.sln",
   "repository": "git@github.com:fluxinc/dicom-capacitor-warden.git",

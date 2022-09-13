@@ -4,6 +4,7 @@ using System.IO;
 using System.ServiceProcess;
 using System.Speech.Synthesis;
 using Usb.Events;
+using Zipline.Properties;
 
 namespace Zipline
 {
@@ -34,14 +35,24 @@ namespace Zipline
     protected override void OnStart(string[] args)
     {
       Logger.Info("Starting Zipline...");
-      var usbEventWatcher = new UsbEventWatcher();
+      Utility.Globals.LoadGlobalDefaults(Settings.Default);
 
+      if (string.IsNullOrEmpty(Settings.Default.publicKey))
+      {
+        Logger.Info("No public key defined.  Please add publicKey: to config.yml");
+        Environment.Exit(1);
+      }
+
+      SetupVirtualDrives();
+
+      var usbEventWatcher = new UsbEventWatcher();
       usbEventWatcher.UsbDriveEjected += (_, path) => OnUsbDriveEjected(path);
       usbEventWatcher.UsbDriveMounted += (_, path) => OnUsbDriveMounted(path);
     }
 
     protected override void OnStop()
     {
+      Logger.Info("Stopping Zipline...");
     }
 
     private void OnUsbDriveMounted(string path)
@@ -64,6 +75,26 @@ namespace Zipline
       LoggerWithRobot("All updates complete. You may now remove the flash drive.");
     }
 
+    private static void OnVirtualCreate(object source, FileSystemEventArgs e)
+    {
+      Logger.Info($"New virtual USB file {e.Name}");
+      var ziplinePackage = new ZiplinePackage(new FileInfo(e.FullPath));
+      ziplinePackage.IgnoreHashLog = Settings.Default.virtualRepeat;
+      ziplinePackage.Update();
+    }
+
+    private static void SetupVirtualDrives()
+    {
+      if (String.IsNullOrEmpty(Settings.Default.virtualUSB)) return;
+
+      FileSystemWatcher watcher = new FileSystemWatcher();
+      watcher.Path = Settings.Default.virtualUSB;
+      watcher.Filter = "zipline*.zip";
+      watcher.Created += OnVirtualCreate;
+      watcher.EnableRaisingEvents = true;
+      Logger.Info($"Virtual Drive setup at {Settings.Default.virtualUSB}");
+    }
+
     private static void OnUsbDriveEjected(string path)
     {
       Logger.Info($"{path} was ejected.");
@@ -74,7 +105,7 @@ namespace Zipline
       Logger.Info(strung);
 
 #if RELEASE
-      synth.Speak(strung);
+      if (Settings.Default.enableVoice) { synth.Speak(strung); }
 #endif
     }
   }
