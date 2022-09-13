@@ -37,6 +37,12 @@ namespace Zipline
       Logger.Info("Starting Zipline...");
       Utility.Globals.LoadGlobalDefaults(Settings.Default);
 
+      if (string.IsNullOrEmpty(Settings.Default.publicKey))
+      {
+        Logger.Info("No public key defined.  Please add publicKey: to config.yml");
+        Environment.Exit(1);
+      }
+
       SetupVirtualDrives();
 
       var usbEventWatcher = new UsbEventWatcher();

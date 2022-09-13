@@ -82,5 +82,17 @@ namespace Zipline.Properties {
                 this["virtualRepeat"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string publicKey {
+            get {
+                return ((string)(this["publicKey"]));
+            }
+            set {
+                this["publicKey"] = value;
+            }
+        }
     }
 }
